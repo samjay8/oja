@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f7f1e6;
+  --surface: #fffaf2;
+  --ink: #1b1a17;
+  --muted: #6b6359;
+  --line: #e4d9c6;
+  --indigo: #1f2a5a;
+  --indigo-soft: #e6e8f3;
+  --ochre: #c9822b;
+  --ochre-soft: #f6e5cc;
+  --ok: #2f6b3f;
+  --warn: #9a5b0b;
+  --bubble-buyer: #1f2a5a;
+  --bubble-buyer-ink: #fffaf2;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14130f;
+    --surface: #1d1b16;
+    --ink: #f2ece1;
+    --muted: #a59b8c;
+    --line: #34302a;
+    --indigo: #9fb0f0;
+    --indigo-soft: #232a45;
+    --ochre: #e0a252;
+    --ochre-soft: #3a2c19;
+    --ok: #7cc48d;
+    --warn: #e8b264;
+    --bubble-buyer: #33407a;
+    --bubble-buyer-ink: #f2ece1;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-indigo: var(--indigo);
+  --color-indigo-soft: var(--indigo-soft);
+  --color-ochre: var(--ochre);
+  --color-ochre-soft: var(--ochre-soft);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
