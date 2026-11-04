@@ -87,3 +87,33 @@ Source: Google Form responses Sheet (raw data **not** stored in the repo; it con
 - **Diaspora buyers** (UK/US/Canada) who buy from Nigerian sellers: at least 5.
 - **Sellers with regular foreign buyers** (fashion/aso-ebi vendors on Instagram): at least 5.
 - Follow-up calls with R1 and R5 (both opted in).
+
+## Addendum: R6 (received 2026-10-31), totals now n = 6
+
+**R6 (Ibadan): electronics and gadgets, more than 100 orders a month, top channel is their own website**, also WhatsApp, Instagram, Facebook, TikTok and referrals. Spends **₦700k+ a month** on ads and design tools. Agreed to be quoted anonymously and to a follow-up call.
+
+What's new from R6:
+- **The biggest cross-border seller so far:** says most buyers are outside the city *and* outside Nigeria (over 50% each). Foreign buyers pay "through USD or crypto". Has a PayPal account but doesn't use it to receive; hasn't linked Paga. ⚠️ Same share question as the one R2 misread, so confirm on the follow-up call: how many buyers abroad last month, and which countries.
+- **First person still using Meta's AI agent** ("tried it and still use it"). Meta's agent is now 2/3 stopped, 1/3 still using. So "Meta's bot failed" no longer holds as a blanket claim. The gap to claim is narrower: payment, price floors and delivery, not "bots are bad".
+- **Pay on delivery** is how R6 sells (Facebook buyer paid by transfer on delivery) and how R6 trusts as a buyer ("pay on delivery", "someone I know recommended them"). Felt safety 5/5, never scammed.
+- Lost sale: "the customer wasn't serious". Top loss reason: **buyer stopped replying** (not delivery).
+- Haggling: tells buyers the price is already discounted; a floor for some items only.
+
+Updated totals (n = 6):
+
+| Signal | Batch 1 (n=5) | Now (n=6) |
+|---|---|---|
+| Delivery cost/time loses sales | 5/5 | **5/6** |
+| Buyer stopped replying | 3/5 | **4/6** |
+| Buyers scammed or nearly | 4/5 | **4/6** |
+| Avg felt safety paying | 3.6 | **3.8** |
+| Floor price on every item / some items | 4 / 1 | **4 / 2** |
+| Tried Meta's agent → stopped / still use | 2 / 0 | **2 / 1** |
+| Sellers receiving with PayPal | 0/5 | **0/6** |
+| Sellers with a meaningful share of buyers abroad | unclear | **1 clear (R6), to confirm** |
+
+What it changes for Oja:
+1. **Follow-up nudges move up** (now 4/6): a quiet buyer gets one reminder with the pay link. Moved from "should" toward "must" in the PRD.
+2. **Pay-on-delivery is a trust habit we must answer.** PayPal's version: the buyer pays now with PayPal Buyer Protection, so they get the same safety without the seller carrying the risk. Candidate feature (post-freeze, not MVP): authorize at checkout, **capture when the seller ships**, within PayPal's 29-day authorization window.
+3. **Positioning:** don't call Meta's agent a failure. Say "Meta's agent answers; Oja closes the sale: price floor, delivery quote, PayPal checkout, tracking."
+4. **Call R6 first.** Highest volume, highest tool spend, most foreign buyers, already pays for automation: our ideal early customer.

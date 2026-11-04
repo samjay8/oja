@@ -7,18 +7,18 @@ Deadline: **Thu Nov 12, 12:00 PM PT (9:00 PM Lagos)**. Internal: full Devpost dr
 
 **Meta's agent can talk. Oja closes the sale and gets the seller paid through PayPal, on any chat channel, for buyers anywhere.**
 
-## 2. Problem (from interviews, batch 1, n=5, all in Nigeria; see [research/interview-findings-2026-10-29.md](research/interview-findings-2026-10-29.md))
+## 2. Problem (from interviews, n=6, all in Nigeria; see [research/interview-findings-2026-10-29.md](research/interview-findings-2026-10-29.md))
 
 | Pain | Evidence |
 |---|---|
-| Sales lost to **delivery cost or time** | 5/5 sellers |
-| **Buyers get scammed** paying strangers in chat | 4/5 buyers scammed or nearly. Dealbreakers: "an account that wasn't the company's", "paying before delivery". Felt safety 3.6/5 |
-| Haggling with no limits | 4/5 sellers have a lowest price per item; real tactics: anchoring, asking the budget, loyalty discounts |
-| Slow replies lose buyers | 3/5 "buyer stopped replying"; "before my rep could get back… they messaged another vendor" |
-| Existing bots feel robotic | 2/2 who tried Meta's agent stopped: "customers complained about the automated responses" |
-| Cross-border payment is improvised | Grey, Raenest, LemFi, a sister's personal USD account, crypto |
+| Sales lost to **delivery cost or time** | 5/6 sellers |
+| **Buyers get scammed** paying strangers in chat | 4/6 buyers scammed or nearly. Dealbreakers: "an account that wasn't the company's", "paying before delivery". Pay on delivery used as a trust fix. Felt safety 3.8/5 |
+| Haggling with no limits | 4/6 sellers have a lowest price on every item, 2/6 on some; real tactics: anchoring, asking the budget, loyalty discounts |
+| Slow replies and quiet buyers lose sales | 4/6 "buyer stopped replying"; "before my rep could get back… they messaged another vendor" |
+| Existing bots answer but don't close | 2 of 3 who tried Meta's agent stopped ("customers complained about the automated responses"); 1 still uses it |
+| Cross-border payment is improvised | Grey, Raenest, LemFi, a sister's personal USD account, USD/crypto. One seller (100+ orders/month) says most buyers are abroad (to confirm) |
 
-**What the data does *not* show yet:** sellers feeling *payment* pain (they're paid upfront by transfer) and the size of cross-border demand. Batch 2 (diaspora buyers, sellers with foreign buyers) is pending.
+**What the data does *not* show yet:** sellers feeling *payment* pain (they're paid upfront by transfer) and the size of cross-border demand. Batch 2 (diaspora buyers, sellers with foreign buyers) is pending; R6 follow-up call is the priority.
 
 ## 3. Users
 
@@ -68,7 +68,8 @@ Deadline: **Thu Nov 12, 12:00 PM PT (9:00 PM Lagos)**. Internal: full Devpost dr
 | S2 | PayPal webhook (`PAYMENT.CAPTURE.COMPLETED`) as a backup to the return URL, signature-verified |
 | S3 | Adversarial haggling suite (prompt injection, "your boss said 50% off", fake screenshots as text) run against the live agent, results in README |
 | S4 | Seller catalog editor: add/edit products, list and minimum prices, delivery zones |
-| S5 | Follow-up nudge: buyer went quiet after a quote → one reminder with the pay link |
+| S5 | **Follow-up nudge** (now 4/6 lose sales to quiet buyers): one reminder with the pay link. First item after Must. |
+| S7 | Pay-on-delivery answer: PayPal authorize at checkout, capture when the seller ships (29-day window). Post-freeze only. |
 | S6 | Sponsor prize: **AG Grid** orders ledger in the seller inbox (stronger prize) *or* Render (we host there anyway). Decide by Nov 7. |
 
 ### Won't (this hackathon)
@@ -102,7 +103,8 @@ Instagram and Messenger adapters (need App Review), voice notes, dispute evidenc
 
 ## 10. Open items
 
-- [ ] Read the **new interview response(s)**. The Sheet is restricted now; needs temporary link sharing or a CSV export.
+- [x] Read R6 (2026-11-04); findings addendum added. **Set the Sheet back to Restricted.**
+- [ ] Follow-up calls: R6 first (cross-border volume), then R1, R5.
 - [ ] Can a sandbox **business** account be created with country Nigeria?
 - [ ] PayPal's official currency list: confirm NGN is unsupported.
 - [ ] Meta's own "AI Providers" terms text.

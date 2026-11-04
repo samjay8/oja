@@ -15,14 +15,15 @@ Legend: ⬜ todo · 🟡 in progress / partly done · ✅ done · ⛔ blocked (s
 | Neon `DATABASE_URL` | Hosted demo | ⛔ |
 | Render login | Hosted demo | ⛔ |
 | Meta developer app + WhatsApp test number | S1 only | ⛔ (should-have) |
-| Sheet access (temporary link share or CSV) | New interview response | ⛔ |
+| Sheet back to **Restricted** (has contact details) | Privacy | ⬜ |
+| Book R6 follow-up call (cross-border volume, countries) | Pitch evidence | ⬜ |
 
 ## Day plan
 
 ### Wed Nov 4: plan + first live run
 - ✅ PRD + this tracker
 - ✅ MIT `LICENSE`
-- ⬜ Read the new interview response; update findings
+- ✅ Read R6; findings addendum + PRD numbers updated
 - ⛔ Live sandbox E2E: chat → haggle → checkout → approve → capture → ship (needs keys)
 - ⬜ Fix whatever the live run breaks
 
@@ -34,7 +35,7 @@ Legend: ⬜ todo · 🟡 in progress / partly done · ✅ done · ⛔ blocked (s
 
 ### Fri Nov 6: prove the safety story
 - ⬜ Adversarial haggling suite against the live agent (S3), results table in README
-- ⬜ Follow-up nudge (S5) if time
+- ⬜ Follow-up nudge (S5): promoted, 4/6 lose sales to quiet buyers
 - ⬜ WhatsApp test number live (S1)
 
 ### Sat Nov 7: product completeness
@@ -95,4 +96,4 @@ Legend: ⬜ todo · 🟡 in progress / partly done · ✅ done · ⛔ blocked (s
 ## Log
 
 - 2026-10-30: Scaffold committed (`6941dcd`), pushed to private `samjay8/oja`. 18 tests green.
-- 2026-11-04: PRD + tracker + LICENSE. Credentials still empty; Sheet restricted (new response unread).
+- 2026-11-04: PRD + tracker + LICENSE. Read R6 (electronics, 100+ orders/mo, most buyers abroad, still uses Meta's agent). Credentials still empty.
