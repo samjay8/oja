@@ -8,7 +8,8 @@ AI sales agent that closes chat sales (web chat + WhatsApp/Instagram/Messenger) 
 
 - `docs/hackathon-rules.md`: official rules, **verbatim, binding**. Check here before any scope, video, licensing or submission decision.
 - `docs/rules-checklist.md`: what the rules mean for this project (must-haves, prize stacking, judging).
-- `docs/research/oja-decision.md`: the current idea, scope and payment router.
+- `docs/PRD.md`: requirements and scope (Must/Should/Won't). `docs/MVP.md`: day-by-day tracker; update it as work lands.
+- `docs/research/oja-decision.md`: the original idea record and payment router.
 - `docs/research/verified-facts.md`: facts with sources and status, plus open questions. **Don't state unverified items as fact.**
 - `docs/research/threat-model.md`: risks and mitigations.
 - `docs/research/idea-history.md`: rejected ideas and why (don't re-propose them).
