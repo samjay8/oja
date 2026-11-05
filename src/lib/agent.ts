@@ -1,9 +1,7 @@
-// The sales agent. Claude talks; Oja's tools decide every price, delivery cost and
+// The sales agent. The model talks; Oja's tools decide every price, delivery cost and
 // total. Replies are checked by the money guard before anyone sees them.
 
 import "server-only";
-import Anthropic from "@anthropic-ai/sdk";
-import { betaZodTool } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import type { DB } from "@/db";
@@ -15,16 +13,9 @@ import {
 import { etaText } from "./delivery";
 import { amountsIn, checkReply } from "./guard";
 import { format } from "./money";
+import { generate, tool, type Turn } from "./llm";
 import { createCheckout, paypalConfigured } from "./paypal";
 import { unitPriceFor } from "./pricing";
-
-export const MODEL = process.env.OJA_MODEL ?? "claude-opus-5-5";
-
-let client: Anthropic | null = null;
-function anthropic() {
-  client ??= new Anthropic();
-  return client;
-}
 
 function systemPrompt(v: Vendor) {
   return `You are Oja, the AI sales assistant for ${v.name}${v.tagline ? ` (${v.tagline})` : ""}. You chat with buyers anywhere in the world and help them buy.
@@ -59,7 +50,7 @@ function toolsFor(db: DB, vendor: Vendor, conv: Conversation, baseUrl: string) {
   };
 
   return [
-    betaZodTool({
+    tool({
       name: "search_catalog",
       description: "Search this shop's catalog. Empty query lists everything. Returns ids, names, list prices and stock.",
       inputSchema: z.object({ query: z.string().optional() }),
@@ -75,7 +66,7 @@ function toolsFor(db: DB, vendor: Vendor, conv: Conversation, baseUrl: string) {
         ].filter(Boolean).join(" | ")).join("\n");
       }),
     }),
-    betaZodTool({
+    tool({
       name: "product_details",
       description: "Full details for one product: description, price for a quantity, media, reviews.",
       inputSchema: z.object({ product_id: z.string(), qty: z.number().int().min(1).max(500).default(1) }),
@@ -95,7 +86,7 @@ function toolsFor(db: DB, vendor: Vendor, conv: Conversation, baseUrl: string) {
         ].filter(Boolean).join("\n");
       }),
     }),
-    betaZodTool({
+    tool({
       name: "show_reviews",
       description: "Real reviews from past buyers, to share when someone hesitates.",
       inputSchema: z.object({ product_id: z.string().optional() }),
@@ -104,7 +95,7 @@ function toolsFor(db: DB, vendor: Vendor, conv: Conversation, baseUrl: string) {
         return revs.length ? revs.map((r) => `${r.rating}/5 "${r.body}" (${r.author})`).join("\n") : "No reviews yet.";
       }),
     }),
-    betaZodTool({
+    tool({
       name: "negotiate",
       description: "Use for any haggling, 'last price', discount or bulk request. Pass the buyer's offered unit price exactly as they wrote it, or omit it if they didn't name one. Returns the price you may quote.",
       inputSchema: z.object({
@@ -123,7 +114,7 @@ function toolsFor(db: DB, vendor: Vendor, conv: Conversation, baseUrl: string) {
         return `COUNTER: ${product.name} x${qty} at ${each} each (${total}).${decision.final ? " This is the final price; don't go lower." : ""}`;
       }),
     }),
-    betaZodTool({
+    tool({
       name: "quote_delivery",
       description: "Delivery cost, carrier and time to the buyer's location, from the seller's delivery table.",
       inputSchema: z.object({ country_code: z.string().length(2).describe("ISO-3166 alpha-2, e.g. NG, GB, US"), city: z.string().optional() }),
@@ -133,7 +124,7 @@ function toolsFor(db: DB, vendor: Vendor, conv: Conversation, baseUrl: string) {
         return `Delivery to ${city ? `${city}, ` : ""}${country_code.toUpperCase()}: ${money(q.costMinor)} with ${q.carrier}, ${etaText(q)} after dispatch${q.tracked ? ", tracked" : ""}. Made-to-order items add their making time.`;
       }),
     }),
-    betaZodTool({
+    tool({
       name: "create_checkout",
       description: "Create the order and payment link once items, quantities and the full delivery address are confirmed. Prices come from agreed offers or list prices automatically.",
       inputSchema: z.object({
@@ -160,7 +151,7 @@ function toolsFor(db: DB, vendor: Vendor, conv: Conversation, baseUrl: string) {
         return `${summary}\nPay by bank transfer to ${vendor.name}'s business account only: ${vendor.bankTransferDetails ?? "(ask the seller)"}. Use ${order.ref} as the reference. The seller confirms receipt; nothing ships before that.`;
       }),
     }),
-    betaZodTool({
+    tool({
       name: "order_status",
       description: "Look up an order by its reference (OJA-XXXXXX).",
       inputSchema: z.object({ ref: z.string() }),
@@ -170,7 +161,7 @@ function toolsFor(db: DB, vendor: Vendor, conv: Conversation, baseUrl: string) {
         return `${o.ref}: ${o.status.replace("_", " ")}; total ${money(o.totalMinor)}${o.trackingNumber ? `; tracking ${o.trackingNumber} (${o.carrier})` : ""}${o.status === "awaiting_payment" && o.paypalApproveUrl ? `; pay link ${o.paypalApproveUrl}` : ""}.`;
       }),
     }),
-    betaZodTool({
+    tool({
       name: "handoff_to_human",
       description: "Ask the seller to step in: custom requests, complaints, anything your tools can't answer, or when the buyer asks for a person.",
       inputSchema: z.object({ reason: z.string() }),
@@ -216,34 +207,24 @@ export type AgentReply = { body: string; status: "sent" | "draft"; flagged?: str
 export async function runAgentTurn(db: DB, vendor: Vendor, conv: Conversation, baseUrl: string): Promise<AgentReply | null> {
   if (conv.aiPaused) return null;
   const past = await history(db, conv.id);
-  const turns: Anthropic.Beta.BetaMessageParam[] = [];
+  const turns: Turn[] = [];
   for (const m of past) {
     const role = m.role === "buyer" ? "user" : "assistant";
     const text = m.role === "system" ? `[Oja system notice to buyer] ${m.body}` : m.role === "vendor" ? `[${vendor.name} (human) wrote] ${m.body}` : m.body;
     const last = turns.at(-1);
-    if (last && last.role === role && typeof last.content === "string") last.content += `\n\n${text}`;
-    else turns.push({ role, content: text });
+    if (last && last.role === role) last.text += `
+
+${text}`;
+    else turns.push({ role, text });
   }
   if (!turns.length || turns.at(-1)!.role !== "user") return null;
-  if (turns[0].role !== "user") turns.unshift({ role: "user", content: "(conversation started)" });
+  if (turns[0].role !== "user") turns.unshift({ role: "user", text: "(conversation started)" });
 
-  const final = await anthropic().beta.messages.toolRunner({
-    model: MODEL,
-    max_tokens: 4000,
-    system: systemPrompt(vendor),
-    messages: turns,
-    tools: toolsFor(db, vendor, conv, baseUrl),
-    output_config: { effort: "low" },
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
-    max_iterations: 8,
-  });
-
-  if (final.stop_reason === "refusal") {
+  const { text: body, refused } = await generate(systemPrompt(vendor), turns, toolsFor(db, vendor, conv, baseUrl));
+  if (refused) {
     await db.update(conversations).set({ needsHuman: true }).where(eq(conversations.id, conv.id));
     return null;
   }
-  const body = final.content.filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text").map((b) => b.text).join("\n").trim();
   if (!body) return null;
 
   const lastBuyer = past.filter((m) => m.role === "buyer").map((m) => m.body).join("\n");

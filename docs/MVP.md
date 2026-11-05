@@ -9,7 +9,7 @@ Legend: ⬜ todo · 🟡 in progress / partly done · ✅ done · ⛔ blocked (s
 
 | Item | Needed for | Status |
 |---|---|---|
-| `ANTHROPIC_API_KEY` in `.env.local` | Any live agent test | ⛔ |
+| `ANTHROPIC_API_KEY` in `.env.local` | Final model (Claude) | ⛔ (Gemini free-tier key in use meanwhile; ~20 requests/day/model) |
 | PayPal sandbox app client ID + secret | Checkout, capture, tracking | ⛔ |
 | Sandbox **personal** (buyer) account email + password | README for judges, E2E test | ⛔ |
 | Neon `DATABASE_URL` | Hosted demo | ⛔ |
@@ -97,3 +97,4 @@ Legend: ⬜ todo · 🟡 in progress / partly done · ✅ done · ⛔ blocked (s
 
 - 2026-10-30: Scaffold committed (`6941dcd`), pushed to private `samjay8/oja`. 18 tests green.
 - 2026-11-04: PRD + tracker + LICENSE. Read R6 (electronics, 100+ orders/mo, most buyers abroad, still uses Meta's agent). Credentials still empty.
+- 2026-11-05: Provider switch (`OJA_PROVIDER=anthropic|gemini`, `src/lib/llm.ts`). First live agent run on Gemini 3.5 Flash: quoted delivery upfront, held the floor ($76 → $73 vs $68 floor), refused a "$20 from the owner" injection. Replies 7–72 s (overload + retries). Free-tier quota ran out after ~15 turns.
