@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { boolean, integer, jsonb, pgTable, text, timestamp, uniqueIndex, index } from "drizzle-orm/pg-core";
 import type { Playbook, QtyTier } from "@/lib/pricing";
 import type { Currency } from "@/lib/money";
+import type { LanguageCode } from "@/lib/languages";
 
 const id = () => text("id").primaryKey().default(sql`gen_random_uuid()::text`);
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
@@ -27,8 +28,26 @@ export const vendors = pgTable("vendors", {
   /** sha256 of the vendor dashboard key. */
   dashboardKeyHash: text("dashboard_key_hash").notNull(),
   whatsappPhoneNumberId: text("whatsapp_phone_number_id").unique(),
+  /** Language the seller reads; buyer messages are translated into it on request. */
+  language: text("language").$type<LanguageCode>().notNull().default("en"),
   createdAt: createdAt(),
 });
+
+/**
+ * A seller's agent launched on a Meta channel. externalId is the WhatsApp
+ * phone_number_id, the Facebook Page id, or the Instagram professional account id.
+ * The access token is stored encrypted (src/lib/crypto.ts).
+ */
+export const channelConnections = pgTable("channel_connections", {
+  id: id(),
+  vendorId: text("vendor_id").notNull().references(() => vendors.id, { onDelete: "cascade" }),
+  channel: text("channel").$type<Exclude<Channel, "web">>().notNull(),
+  externalId: text("external_id").notNull(),
+  displayName: text("display_name"),
+  accessTokenEnc: text("access_token_enc").notNull(),
+  active: boolean("active").notNull().default(true),
+  createdAt: createdAt(),
+}, (t) => [uniqueIndex("channel_connections_ext_uq").on(t.channel, t.externalId)]);
 
 export const products = pgTable("products", {
   id: id(),
@@ -75,6 +94,8 @@ export const conversations = pgTable("conversations", {
   /** Channel-side identity: web session id, WhatsApp wa_id, PSID, IGSID. */
   buyerRef: text("buyer_ref").notNull(),
   buyerName: text("buyer_name"),
+  /** Buyer's chosen language; null = match whatever they write in. */
+  language: text("language").$type<LanguageCode>(),
   /** Human took over: the AI stops drafting until released. */
   aiPaused: boolean("ai_paused").notNull().default(false),
   needsHuman: boolean("needs_human").notNull().default(false),
@@ -93,6 +114,8 @@ export const messages = pgTable("messages", {
   body: text("body").notNull(),
   /** Channel message id, for de-duplicating webhook retries. */
   externalId: text("external_id").unique(),
+  /** Cached translations, keyed by language code. */
+  translations: jsonb("translations").$type<Partial<Record<LanguageCode, string>>>().notNull().default({}),
   createdAt: createdAt(),
 }, (t) => [index("messages_conv_idx").on(t.conversationId, t.createdAt)]);
 

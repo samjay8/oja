@@ -3,18 +3,37 @@
 Scope and reasons: [PRD.md](PRD.md). Tick items here as they land; one line of notes each.
 Legend: ⬜ todo · 🟡 in progress / partly done · ✅ done · ⛔ blocked (says on what)
 
-**Days left:** Nov 4 → Nov 12 (submit by 9:00 PM Lagos). Internal draft Nov 11. **Feature freeze: end of Nov 8.**
+**Now:** Wed Nov 11 (final build day). **Submit by Thu Nov 12, 9:00 PM Lagos (12:00 PM PT).** The Nov 5–10 plan below slipped; the **Crunch plan** replaces it.
+
+## Crunch plan (Nov 11–12)
+
+### Wed Nov 11: build it all
+- 🟡 Aró design system: tokens, fonts, patterns, UI kit (`globals.css`, `components/ui.tsx`) ✅; pages being restyled
+- 🟡 Buyer side: landing, shop, chat with language picker (agent 1)
+- 🟡 Seller desk: shell, inbox restyle + Translate, catalog editor, settings, channels page (agent 2)
+- 🟡 Channels + languages backend: one Meta webhook (WhatsApp/Messenger/Instagram), connect API, encrypted tokens, chat language, translate API, daily spend cap (agent 3)
+- ✅ PRD reframed: web first → launch on channels; languages; design system; scaling
+- ⛔ Live PayPal sandbox E2E (needs client ID + secret)
+- ⛔ Live Claude run (needs `ANTHROPIC_API_KEY`)
+- ⬜ Integrate + build + browser check + commit
+
+### Thu Nov 12: ship
+- ⬜ Deploy: Neon + Render, `APP_URL`, env vars
+- ⬜ README final with sandbox buyer login; repo **public**; licence detected
+- ⬜ Video < 3:00 (web chat first; no Meta logos; English subtitles for other languages)
+- ⬜ Devpost text + submit **before 9:00 PM Lagos**
+
 
 ## Blockers (needed from samjay8)
 
 | Item | Needed for | Status |
 |---|---|---|
-| `ANTHROPIC_API_KEY` in `.env.local` | Final model (Claude) | ⛔ (Gemini free-tier key in use meanwhile; ~20 requests/day/model) |
-| PayPal sandbox app client ID + secret | Checkout, capture, tracking | ⛔ |
-| Sandbox **personal** (buyer) account email + password | README for judges, E2E test | ⛔ |
+| `ANTHROPIC_API_KEY` in `.env.local` | Final model (Claude) | ✅ Opus 5.5 live, 4–9 s replies |
+| Sandbox **personal** (buyer) account password | README for judges, E2E test | ✅ in README |
+| Sandbox REST app "Oja" → client ID + secret | Checkout | ✅ in `.env.local`; real sandbox order OJA-4EADTH created, $114.00 matched, payee = business account |
 | Neon `DATABASE_URL` | Hosted demo | ⛔ |
 | Render login | Hosted demo | ⛔ |
-| Meta developer app + WhatsApp test number | S1 only | ⛔ (should-have) |
+| Meta developer app (app secret, webhook verify token) + a test Page / IG account / WhatsApp test number | Live channels (M15 works without; S1 needs it) | ⛔ |
 | Sheet back to **Restricted** (has contact details) | Privacy | ⬜ |
 | Book R6 follow-up call (cross-border volume, countries) | Pitch evidence | ⬜ |
 
@@ -98,3 +117,5 @@ Legend: ⬜ todo · 🟡 in progress / partly done · ✅ done · ⛔ blocked (s
 - 2026-10-30: Scaffold committed (`6941dcd`), pushed to private `samjay8/oja`. 18 tests green.
 - 2026-11-04: PRD + tracker + LICENSE. Read R6 (electronics, 100+ orders/mo, most buyers abroad, still uses Meta's agent). Credentials still empty.
 - 2026-11-05: Provider switch (`OJA_PROVIDER=anthropic|gemini`, `src/lib/llm.ts`). First live agent run on Gemini 3.5 Flash: quoted delivery upfront, held the floor ($76 → $73 vs $68 floor), refused a "$20 from the owner" injection. Replies 7–72 s (overload + retries). Free-tier quota ran out after ~15 turns.
+- 2026-11-11: Reframe: web first, launch agent on WhatsApp/Messenger/Instagram, 8 languages (EN, Naijá, Yorùbá, Hausa, Igbo, FR, DE, ZH). Aró design system. Work split across 3 parallel agents (buyer UI, seller desk, channels+languages backend). Sandbox accounts created by user (business + personal); app credentials still needed.
+- 2026-11-11: Gemini removed (code, dependency, keys). Claude Opus 5.5 is the only model; it also runs all 8 languages and seller translations.

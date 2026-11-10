@@ -6,6 +6,7 @@ import { conversations } from "@/db/schema";
 import { runAgentTurn } from "@/lib/agent";
 import { baseUrl, json } from "@/lib/app";
 import { addMessage, findConversation, getOrCreateConversation, history, vendorBySlug } from "@/lib/commerce";
+import { isLanguage } from "@/lib/languages";
 import { allow } from "@/lib/ratelimit";
 
 const Session = z.string().regex(/^[A-Za-z0-9-]{16,64}$/);
@@ -22,20 +23,26 @@ export async function GET(req: NextRequest) {
   const vendor = await vendorBySlug(db, shop);
   if (!vendor) return json({ error: "no such shop" }, 404);
   const conv = await findConversation(db, vendor.id, "web", session.data);
-  if (!conv) return json({ messages: [], sellerReviewing: false });
+  if (!conv) return json({ messages: [], sellerReviewing: false, language: null });
   const all = await history(db, conv.id, { includeDrafts: true });
   return json({
     messages: publicMessages(all.filter((m) => m.status === "sent")),
     sellerReviewing: all.at(-1)?.status === "draft" || (conv.needsHuman && all.at(-1)?.role === "buyer"),
+    language: conv.language ?? null,
   });
 }
 
-const Body = z.object({ shop: z.string().max(64), session: Session, text: z.string().trim().min(1).max(2000) });
+const Body = z.object({
+  shop: z.string().max(64),
+  session: Session,
+  text: z.string().trim().min(1).max(2000),
+  language: z.string().refine(isLanguage).optional(),
+});
 
 export async function POST(req: NextRequest) {
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return json({ error: "bad request" }, 400);
-  const { shop, session, text } = parsed.data;
+  const { shop, session, text, language } = parsed.data;
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
   if (!allow(`chat:${session}`, 20, 5 * 60_000) || !allow(`chat-ip:${ip}`, 60, 10 * 60_000)) {
     return json({ error: "You're sending messages quickly. Give it a minute." }, 429);
@@ -44,7 +51,10 @@ export async function POST(req: NextRequest) {
   const db = await getDb();
   const vendor = await vendorBySlug(db, shop);
   if (!vendor) return json({ error: "no such shop" }, 404);
-  const conv = await getOrCreateConversation(db, vendor.id, "web", session);
+  let conv = await getOrCreateConversation(db, vendor.id, "web", session);
+  if (language && isLanguage(language) && conv.language !== language) {
+    [conv] = await db.update(conversations).set({ language }).where(eq(conversations.id, conv.id)).returning();
+  }
   await addMessage(db, conv.id, "buyer", text);
 
   let reply = null;
@@ -59,5 +69,6 @@ export async function POST(req: NextRequest) {
   return json({
     messages: publicMessages(all.filter((m) => m.status === "sent")),
     sellerReviewing: reply?.status === "draft" || reply === null,
+    language: conv.language ?? null,
   });
 }

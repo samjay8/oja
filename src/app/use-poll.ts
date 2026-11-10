@@ -1,24 +1,33 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type SetStateAction } from "react";
 
 /** Poll a JSON endpoint. `reload()` fetches now. A null url pauses polling. */
 export function usePoll<T>(url: string | null, ms: number) {
-  const [data, setData] = useState<T | null>(null);
+  const [data, setRaw] = useState<T | null>(null);
   const [status, setStatus] = useState<number | null>(null);
   const [nonce, setNonce] = useState(0);
+  // Bumped by setData so a poll that started earlier can't overwrite fresher data.
+  const gen = useRef(0);
+  const last = useRef("");
 
   useEffect(() => {
     if (!url) return;
     let alive = true;
-    const tick = () =>
-      fetch(url, { cache: "no-store" })
+    const tick = () => {
+      const started = gen.current;
+      return fetch(url, { cache: "no-store" })
         .then(async (r) => {
-          if (!alive) return;
+          if (!alive || started !== gen.current) return;
           setStatus(r.status);
-          if (r.ok) setData((await r.json()) as T);
+          if (!r.ok) return;
+          const text = await r.text();
+          if (!alive || started !== gen.current || text === last.current) return;
+          last.current = text;
+          setRaw(JSON.parse(text) as T);
         })
         .catch(() => {});
+    };
     tick();
     const t = setInterval(tick, ms);
     return () => {
@@ -28,5 +37,10 @@ export function usePoll<T>(url: string | null, ms: number) {
   }, [url, ms, nonce]);
 
   const reload = useCallback(() => setNonce((n) => n + 1), []);
+  const setData = useCallback((v: SetStateAction<T | null>) => {
+    gen.current += 1;
+    last.current = "";
+    setRaw(v);
+  }, []);
   return { data, status, reload, setData };
 }

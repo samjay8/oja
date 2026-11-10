@@ -1,56 +1,319 @@
 @import "tailwindcss";
 
+/*
+  Oja design system: "Aró" (indigo dye).
+  Strictly monotone: every colour is one indigo hue at a different depth, like
+  cloth dipped in the dye pot once, five times, twenty times. No second accent.
+  State is shown with weight, fill, outline and pattern, never a new hue.
+*/
+
 :root {
-  --bg: #f7f1e6;
-  --surface: #fffaf2;
-  --ink: #1b1a17;
-  --muted: #6b6359;
-  --line: #e4d9c6;
-  --indigo: #1f2a5a;
-  --indigo-soft: #e6e8f3;
-  --ochre: #c9822b;
-  --ochre-soft: #f6e5cc;
-  --ok: #2f6b3f;
-  --warn: #9a5b0b;
-  --bubble-buyer: #1f2a5a;
-  --bubble-buyer-ink: #fffaf2;
+  --aro-50: #f3f4f9;
+  --aro-100: #e5e7f1;
+  --aro-200: #cbcfe2;
+  --aro-300: #a5abca;
+  --aro-400: #7a82ab;
+  --aro-500: #565f8c;
+  --aro-600: #3e4675;
+  --aro-700: #2d345e;
+  --aro-800: #1f2548;
+  --aro-900: #151934;
+  --aro-950: #0b0e22;
+
+  --paper: var(--aro-50);
+  --surface: #fbfbfd;
+  --sunk: var(--aro-100);
+  --line: var(--aro-200);
+  --line-strong: var(--aro-400);
+  --muted: var(--aro-500);
+  --text: var(--aro-800);
+  --strong: var(--aro-950);
+  --dye: var(--aro-700);
+  --dye-deep: var(--aro-900);
+  --on-dye: var(--aro-50);
+  --wash: var(--aro-100);
+  --pattern: color-mix(in oklab, var(--aro-700) 14%, transparent);
+  --focus: var(--aro-600);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #14130f;
-    --surface: #1d1b16;
-    --ink: #f2ece1;
-    --muted: #a59b8c;
-    --line: #34302a;
-    --indigo: #9fb0f0;
-    --indigo-soft: #232a45;
-    --ochre: #e0a252;
-    --ochre-soft: #3a2c19;
-    --ok: #7cc48d;
-    --warn: #e8b264;
-    --bubble-buyer: #33407a;
-    --bubble-buyer-ink: #f2ece1;
+  :root:not([data-theme="light"]) {
+    --paper: var(--aro-950);
+    --surface: #10142c;
+    --sunk: var(--aro-900);
+    --line: var(--aro-800);
+    --line-strong: var(--aro-600);
+    --muted: var(--aro-400);
+    --text: var(--aro-100);
+    --strong: var(--aro-50);
+    --dye: var(--aro-200);
+    --dye-deep: var(--aro-100);
+    --on-dye: var(--aro-950);
+    --wash: var(--aro-900);
+    --pattern: color-mix(in oklab, var(--aro-300) 12%, transparent);
+    --focus: var(--aro-300);
   }
 }
 
+:root[data-theme="dark"] {
+  --paper: var(--aro-950);
+  --surface: #10142c;
+  --sunk: var(--aro-900);
+  --line: var(--aro-800);
+  --line-strong: var(--aro-600);
+  --muted: var(--aro-400);
+  --text: var(--aro-100);
+  --strong: var(--aro-50);
+  --dye: var(--aro-200);
+  --dye-deep: var(--aro-100);
+  --on-dye: var(--aro-950);
+  --wash: var(--aro-900);
+  --pattern: color-mix(in oklab, var(--aro-300) 12%, transparent);
+  --focus: var(--aro-300);
+}
+
 @theme inline {
-  --color-bg: var(--bg);
+  --color-paper: var(--paper);
   --color-surface: var(--surface);
-  --color-ink: var(--ink);
-  --color-muted: var(--muted);
+  --color-sunk: var(--sunk);
   --color-line: var(--line);
-  --color-indigo: var(--indigo);
-  --color-indigo-soft: var(--indigo-soft);
-  --color-ochre: var(--ochre);
-  --color-ochre-soft: var(--ochre-soft);
-  --color-ok: var(--ok);
-  --color-warn: var(--warn);
-  --font-sans: var(--font-body);
-  --font-display: var(--font-display);
+  --color-line-strong: var(--line-strong);
+  --color-muted: var(--muted);
+  --color-text: var(--text);
+  --color-strong: var(--strong);
+  --color-dye: var(--dye);
+  --color-dye-deep: var(--dye-deep);
+  --color-on-dye: var(--on-dye);
+  --color-wash: var(--wash);
+  --color-aro-50: var(--aro-50);
+  --color-aro-100: var(--aro-100);
+  --color-aro-200: var(--aro-200);
+  --color-aro-300: var(--aro-300);
+  --color-aro-400: var(--aro-400);
+  --color-aro-500: var(--aro-500);
+  --color-aro-600: var(--aro-600);
+  --color-aro-700: var(--aro-700);
+  --color-aro-800: var(--aro-800);
+  --color-aro-900: var(--aro-900);
+  --color-aro-950: var(--aro-950);
+
+  --font-display: var(--font-gloock), "Iowan Old Style", Georgia, serif;
+  --font-sans: var(--font-schibsted), ui-sans-serif, system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: var(--font-martian), ui-monospace, "SFMono-Regular", monospace;
+
+  --radius-tag: 2px;
+}
+
+html {
+  background: var(--paper);
+  color: var(--text);
 }
 
 body {
-  background: var(--bg);
-  color: var(--ink);
+  background: var(--paper);
+  color: var(--text);
+  font-feature-settings: "ss01", "tnum";
+}
+
+::selection {
+  background: var(--dye);
+  color: var(--on-dye);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---- Adire resist-dye patterns (pure CSS, theme-aware) ---- */
+
+/* Eleko dots: starch dots that stay pale when the cloth is dyed. */
+.adire-dots {
+  background-image: radial-gradient(var(--pattern) 1.4px, transparent 1.6px);
+  background-size: 14px 14px;
+}
+
+/* Alabere stitch lines: tied and stitched before dyeing. */
+.adire-stitch {
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--pattern) 0 2px,
+    transparent 2px 9px
+  );
+}
+
+/* Olokun ripples: concentric rings, the sea goddess pattern. */
+.adire-olokun {
+  background-image: repeating-radial-gradient(
+    circle at 0 0,
+    transparent 0 10px,
+    var(--pattern) 10px 11.5px
+  );
+  background-size: 48px 48px;
+}
+
+/* Woven grid, like aso-oke strips sewn together. */
+.adire-grid {
+  background-image:
+    linear-gradient(var(--pattern) 1px, transparent 1px),
+    linear-gradient(90deg, var(--pattern) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* Swatch tag: a fabric price tag with a notched corner. */
+.swatch {
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+}
+
+/* Torn receipt edge for order cards. */
+.receipt-edge {
+  -webkit-mask: radial-gradient(5px at 50% 100%, transparent 98%, #000) 50% / 12px 100% repeat-x;
+  mask: radial-gradient(5px at 50% 100%, transparent 98%, #000) 50% / 12px 100% repeat-x;
+  padding-bottom: 10px;
+}
+
+@keyframes dip {
+  0% { transform: translateY(4px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.dip-in { animation: dip 220ms ease-out both; }
+
+@keyframes ink-pulse {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+.ink-dot { animation: ink-pulse 1.1s ease-in-out infinite; }
+.ink-dot:nth-child(2) { animation-delay: 0.15s; }
+.ink-dot:nth-child(3) { animation-delay: 0.3s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dip-in, .ink-dot { animation: none; }
+}
+
+/* ---- Motion ----
+  Calm, never playful: no bounce, overshoot, scale-pop, parallax or shimmer.
+  The typing dots are the only thing that loops.
+  Short and soft: 160–280ms for feedback, up to ~500ms for one page entrance.
+  Ease-out entering, ease-in leaving. Move 6px at most; prefer opacity.
+  Motion only where it helps: new messages, typing, receipts, hover/press,
+  focus, the hero once on load, banners, the language picker.
+  Content is visible at rest: CSS keyframes only, never scroll-triggered.
+  Reduced motion: movement off, state changes stay instant.
+  Monotone: motion reuses the Aró tokens, never a new hue.
+*/
+
+:root {
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --dur-1: 160ms;
+  --dur-2: 220ms;
+  --dur-3: 280ms;
+  --dur-enter: 480ms;
+}
+
+@layer base {
+  :where(a, button, input, textarea, select, summary, [tabindex]) {
+    outline-offset: 4px;
+    transition:
+      outline-color var(--dur-1) var(--ease-out),
+      outline-offset var(--dur-1) var(--ease-out);
+  }
+}
+
+/* Opt-in smooth anchor scrolling: only pages that render a .smooth-scroll element. */
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.smooth-scroll) { scroll-behavior: smooth; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(4px); }
+}
+@keyframes enter {
+  from { opacity: 0; transform: translateY(6px); }
+}
+@keyframes fade {
+  from { opacity: 0; }
+}
+@keyframes print-in {
+  from { opacity: 0; transform: translateY(-6px); }
+}
+@keyframes ink-spread {
+  from { background-color: var(--wash); }
+}
+
+/* Fade + 4px rise for anything arriving (messages, banners, chips). */
+.rise { animation: rise var(--dur-3) var(--ease-out) both; }
+/* Plain fade. */
+.fade { animation: fade var(--dur-2) var(--ease-out) both; }
+/* One page-entrance step; pair with .stagger on the parent. */
+.enter { animation: enter var(--dur-enter) var(--ease-out) both; }
+/* Receipt sliding out of the printer. */
+.print-in { animation: print-in var(--dur-3) var(--ease-out) both; }
+/* Newly arrived message bubble: the wash soaks in, then dries back to the surface. */
+.ink-new { animation: ink-spread 1.2s var(--ease-out) both; }
+
+/* Children step in 60ms apart, at most six steps. */
+.stagger > :nth-child(2) { animation-delay: 60ms; }
+.stagger > :nth-child(3) { animation-delay: 120ms; }
+.stagger > :nth-child(4) { animation-delay: 180ms; }
+.stagger > :nth-child(5) { animation-delay: 240ms; }
+.stagger > :nth-child(n + 6) { animation-delay: 300ms; }
+
+/* Hover/press feedback for clickable cards: 2px lift, darker edge. */
+.lift {
+  transition:
+    transform var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-out),
+    background-color var(--dur-2) var(--ease-out);
+}
+.lift:hover { transform: translateY(-2px); border-color: var(--line-strong); }
+.lift:active { transform: translateY(0); transition-duration: var(--dur-1); }
+
+/* Calm transition for any interactive control that isn't a Button. */
+.ease-ui {
+  transition-property: background-color, border-color, color, box-shadow, opacity, transform, outline-color, outline-offset;
+  transition-duration: var(--dur-2);
+  transition-timing-function: var(--ease-out);
+}
+
+/* Show/hide by collapsing height and fading (typing indicator, banners). */
+.reveal {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-rows var(--dur-3) var(--ease-out),
+    opacity var(--dur-2) var(--ease-out);
+}
+.reveal > * { min-height: 0; overflow: hidden; }
+.reveal[data-open="false"] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition-timing-function: var(--ease-in);
+  transition-duration: var(--dur-2), var(--dur-1);
+}
+
+/* Popover open/close (language picker). Hidden state is also non-interactive. */
+.pop {
+  transition:
+    opacity var(--dur-2) var(--ease-out),
+    transform var(--dur-2) var(--ease-out),
+    visibility 0s linear 0s;
+}
+.pop[data-open="false"] {
+  opacity: 0;
+  transform: translateY(-4px);
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--dur-1) var(--ease-in),
+    transform var(--dur-1) var(--ease-in),
+    visibility 0s linear var(--dur-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise, .fade, .enter, .print-in, .stagger > *, .ink-new { animation: none; }
+  .lift:hover { transform: none; }
+  .lift, .ease-ui, .reveal, .pop, .pop[data-open="false"], .reveal[data-open="false"] { transition-duration: 0s; transition-delay: 0s; }
+  .pop[data-open="false"] { transform: none; }
 }

@@ -1,7 +1,7 @@
 // Talk to the real agent from the terminal against a throwaway in-memory database.
 //   pnpm try-agent                      # default buyer script
 //   pnpm try-agent "msg 1" "msg 2" ...  # your own messages
-// Uses OJA_PROVIDER / OJA_MODEL / keys from .env.local.
+// Uses ANTHROPIC_API_KEY (and optional OJA_MODEL) from .env.local.
 
 import { config } from "dotenv";
 config({ path: ".env.local" });
@@ -10,7 +10,7 @@ const { openMemoryDb } = await import("../src/db");
 const { seed, DEMO_SLUG } = await import("../src/db/seed");
 const { addMessage, getOrCreateConversation, vendorBySlug } = await import("../src/lib/commerce");
 const { runAgentTurn } = await import("../src/lib/agent");
-const { PROVIDER, MODEL } = await import("../src/lib/llm");
+const { MODEL } = await import("../src/lib/llm");
 
 const script = process.argv.slice(2).length ? process.argv.slice(2) : [
   "Hi, do you have something nice for a wedding? I'm in London.",
@@ -24,7 +24,7 @@ const db = await openMemoryDb();
 await seed(db, { vendorKey: "local" });
 const vendor = (await vendorBySlug(db, DEMO_SLUG))!;
 const conv = await getOrCreateConversation(db, vendor.id, "web", "terminal-buyer");
-console.log(`provider=${PROVIDER} model=${MODEL} shop=${vendor.name} mode=${vendor.replyMode}\n`);
+console.log(`model=${MODEL} shop=${vendor.name} mode=${vendor.replyMode}\n`);
 
 for (const text of script) {
   console.log(`BUYER: ${text}`);
