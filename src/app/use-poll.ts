@@ -20,6 +20,8 @@ export function usePoll<T>(url: string | null, ms: number) {
         .then(async (r) => {
           if (!alive || started !== gen.current) return;
           setStatus(r.status);
+          // Signed out: stop until reload() (e.g. after sign-in) starts polling again.
+          if (r.status === 401) clearInterval(t);
           if (!r.ok) return;
           const text = await r.text();
           if (!alive || started !== gen.current || text === last.current) return;
@@ -29,6 +31,7 @@ export function usePoll<T>(url: string | null, ms: number) {
         .catch(() => {});
     };
     tick();
+    // tick's fetch settles after this line, so it can clear t.
     const t = setInterval(tick, ms);
     return () => {
       alive = false;

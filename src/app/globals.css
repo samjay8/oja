@@ -112,7 +112,7 @@ html {
 body {
   background: var(--paper);
   color: var(--text);
-  font-feature-settings: "ss01", "tnum";
+  font-feature-settings: "ss01"; /* tnum here widened every comma and full stop; figures use tabular-nums */
 }
 
 ::selection {
@@ -223,6 +223,8 @@ body {
 /* Opt-in smooth anchor scrolling: only pages that render a .smooth-scroll element. */
 @media (prefers-reduced-motion: no-preference) {
   html:has(.smooth-scroll) { scroll-behavior: smooth; }
+  /* Site-wide smooth anchor scrolling; Next still jumps instantly on route changes. */
+  html[data-scroll-behavior="smooth"] { scroll-behavior: smooth; }
 }
 
 @keyframes rise {

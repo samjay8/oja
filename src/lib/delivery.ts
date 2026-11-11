@@ -15,11 +15,12 @@ export type DeliveryZone = {
 
 export type DeliveryQuote = DeliveryZone & { matched: "region" | "country" | "fallback" };
 
-export function quoteDelivery(zones: DeliveryZone[], country: string, region?: string): DeliveryQuote | null {
+/** `region` may be several names (city, state): a zone matching any of them wins. */
+export function quoteDelivery(zones: DeliveryZone[], country: string, region?: string | (string | null | undefined)[]): DeliveryQuote | null {
   const c = country.trim().toUpperCase();
-  const r = region?.trim().toLowerCase();
+  const names = (Array.isArray(region) ? region : [region]).map((r) => r?.trim().toLowerCase()).filter(Boolean);
   const inCountry = zones.filter((z) => z.country.toUpperCase() === c);
-  if (r) {
+  for (const r of names) {
     const hit = inCountry.find((z) => z.region && z.region.toLowerCase() === r);
     if (hit) return { ...hit, matched: "region" };
   }

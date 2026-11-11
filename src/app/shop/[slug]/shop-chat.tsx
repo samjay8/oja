@@ -98,13 +98,23 @@ function Receipt({ notice }: { notice: NonNullable<PaymentNotice> }) {
   );
 }
 
+function isPayPal(u: string) {
+  try {
+    const h = new URL(u).hostname;
+    return h === "paypal.com" || h.endsWith(".paypal.com");
+  } catch {
+    return false;
+  }
+}
+
 function Linkified({ text, payLabel }: { text: string; payLabel: string }) {
-  const parts = text.split(/(https?:\/\/[^\s)]+)/g);
+  // Trailing punctuation stays text, so "…token=ABC." links to the real token.
+  const parts = text.split(/(https?:\/\/[^\s)<>"']*[^\s)<>"'.,!?;:])/g);
   return (
     <>
       {parts.map((p, i) =>
         /^https?:\/\//.test(p) ? (
-          p.includes("paypal.com") ? (
+          isPayPal(p) ? (
             <a key={i} href={p} target="_self" className={buttonClass({ size: "lg" }) + " my-2 w-full text-[15px] sm:w-auto"}>
               {payLabel} <span aria-hidden>→</span>
             </a>

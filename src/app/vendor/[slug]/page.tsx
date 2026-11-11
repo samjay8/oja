@@ -1,9 +1,10 @@
 import { Suspense } from "react";
+import { Loading } from "@/components/desk/bits";
 import { VendorInbox } from "./vendor-inbox";
 
 export default function VendorPage(props: PageProps<"/vendor/[slug]">) {
   return (
-    <Suspense fallback={<p className="p-8 text-muted">Loading inbox…</p>}>
+    <Suspense fallback={<Loading label="Opening your inbox…" layout="inbox" />}>
       <Inbox params={props.params} />
     </Suspense>
   );

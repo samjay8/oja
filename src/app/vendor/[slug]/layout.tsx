@@ -24,7 +24,7 @@ export default function DeskLayout({ children, params }: LayoutProps<"/vendor/[s
           </Suspense>
         </div>
         <div className="mx-auto w-full max-w-7xl px-1 sm:px-3">
-          <Suspense fallback={<div className="h-[41px]" />}>
+          <Suspense fallback={<div className="h-11 sm:h-[41px]" />}>
             <DeskNav />
           </Suspense>
         </div>

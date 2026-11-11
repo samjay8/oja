@@ -6,7 +6,7 @@ import { runAgentTurn } from "@/lib/agent";
 import { baseUrl } from "@/lib/app";
 import { deliver } from "@/lib/channels";
 import { parseMetaWebhook, verifyMetaSignature, type Inbound } from "@/lib/channels/meta";
-import { addMessage, getOrCreateConversation, vendorById, vendorBySlug, type Vendor } from "@/lib/commerce";
+import { addMessage, getOrCreateConversation, logEvent, vendorById, vendorBySlug, type Vendor } from "@/lib/commerce";
 
 // Meta's webhook verification handshake (WhatsApp, Messenger and Instagram share it).
 export async function GET(req: NextRequest) {
@@ -57,7 +57,17 @@ export async function POST(req: NextRequest) {
           await db.update(conversations).set({ needsHuman: true }).where(eq(conversations.id, conv.id));
           continue;
         }
-        if (reply?.status === "sent") await deliver(vendor, conv, reply.body);
+        if (reply?.status === "sent") {
+          try {
+            await deliver(vendor, conv, reply.body);
+          } catch (e) {
+            // Saved as sent but never reached the buyer: put it in front of the seller.
+            console.error(`[meta] ${m.channel} delivery failed`, e instanceof Error ? e.message : e);
+            await db.update(conversations).set({ needsHuman: true }).where(eq(conversations.id, conv.id));
+            await logEvent(db, { vendorId: vendor.id, conversationId: conv.id, type: "channel.delivery_failed",
+              data: { channel: m.channel, message: e instanceof Error ? e.message.slice(0, 200) : "unknown" } });
+          }
+        }
       } catch (e) {
         console.error(`[meta] ${m.channel} message failed`, e);
       }

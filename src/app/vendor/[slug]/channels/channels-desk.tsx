@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { Button, CHANNEL_LABEL, ChannelGlyph, Field, Kicker, Stamp, Swatch, Tag } from "@/components/ui";
-import { CopyLine, DeskHeading, Loading, Notice, sendJson, Toggle, useDeskData, useOrigin } from "@/components/desk/bits";
+import { ConfirmButton, CopyLine, DeskHeading, Loading, Notice, Reveal, sendJson, TAP, Toast, Toggle, useDeskData, useFlash, useOrigin } from "@/components/desk/bits";
 import { SignIn } from "@/components/desk/sign-in";
 
 type Meta = "whatsapp" | "messenger" | "instagram";
 type Connection = { id: string; channel: Meta; externalId: string; displayName: string | null; active: boolean; tokenHint: string; createdAt: string };
+type TestResult = { ok: boolean; text: string };
 type ChannelsData = { webhookUrl: string; verifyTokenConfigured: boolean; appSecretConfigured: boolean; channels: Connection[] };
 
 const SPEC: Record<Meta, { product: string; idLabel: string; idHint: string; tokenLabel: string; tokenHint: string; steps: string[] }> = {
@@ -54,36 +55,34 @@ const SPEC: Record<Meta, { product: string; idLabel: string; idHint: string; tok
 export function ChannelsDesk({ slug }: { slug: string }) {
   const { data, status, reload } = useDeskData<ChannelsData>(`/api/vendor/${slug}/channels`);
   const origin = useOrigin();
-  const [msg, setMsg] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
+  const flash = useFlash();
   const api = `/api/vendor/${slug}/channels`;
 
   if (status === 401) return <SignIn slug={slug} onDone={reload} />;
-  if (status === null) return <Loading label="Loading channels…" />;
+  if (status === null) return <Loading label="Opening your channels…" />;
   const unavailable = !data;
   const shopUrl = origin ? `${origin}/shop/${slug}` : "";
 
-  async function run(fn: () => Promise<{ ok?: boolean; detail?: string } | unknown>, ok: string) {
-    setMsg(null);
+  /** Confirms success with a toast; returns the error text for the card to show, if any. */
+  async function run(fn: () => Promise<unknown>, ok: string): Promise<string | null> {
     try {
       await fn();
-      setMsg({ tone: "ok", text: ok });
+      flash.show(ok);
       reload();
-      return true;
+      return null;
     } catch (e) {
-      setMsg({ tone: "error", text: e instanceof Error ? e.message : "Failed" });
-      return false;
+      return e instanceof Error ? e.message : "That didn't go through. Please try again.";
     }
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 space-y-6 px-4 py-6 sm:px-6">
+    <main className="fade mx-auto w-full max-w-5xl flex-1 space-y-6 px-4 py-6 sm:px-6">
       <DeskHeading kicker="Channels" title="Launch Oja where buyers chat" />
       <p className="max-w-2xl text-sm text-muted">
         One agent, one inbox. Every channel you connect lands in your Inbox with the same catalog, price floors, copilot drafts and PayPal checkout.
       </p>
 
       {unavailable && <Notice tone="error">Channel setup isn&apos;t reachable right now ({status || "network error"}). Web chat still works.</Notice>}
-      {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
 
       {data && (
         <Swatch as="section" pattern="grid">
@@ -99,7 +98,7 @@ export function ChannelsDesk({ slug }: { slug: string }) {
         </Swatch>
       )}
 
-      <ul className="grid gap-4 lg:grid-cols-2">
+      <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Swatch as="li" pattern="dots">
           <div className="space-y-3 p-4 sm:p-5">
             <ChannelTitle kind="web" />
@@ -118,17 +117,17 @@ export function ChannelsDesk({ slug }: { slug: string }) {
             onActive={(id, active) => run(() => sendJson(api, "PATCH", { id, active }), active ? `${CHANNEL_LABEL[k]} is live.` : `${CHANNEL_LABEL[k]} is paused. Messages won't be answered.`)}
             onDisconnect={(id) => run(() => sendJson(`${api}?id=${encodeURIComponent(id)}`, "DELETE"), `${CHANNEL_LABEL[k]} disconnected and its token deleted.`)}
             onTest={async (id) => {
-              setMsg(null);
               try {
                 const r = await sendJson<{ ok: boolean; detail: string }>(`${api}/test`, "POST", { id });
-                setMsg({ tone: r.ok ? "ok" : "error", text: `${CHANNEL_LABEL[k]} test: ${r.detail}` });
+                return { ok: r.ok, text: r.detail };
               } catch (e) {
-                setMsg({ tone: "error", text: e instanceof Error ? e.message : "Test failed" });
+                return { ok: false, text: e instanceof Error ? e.message : "The test didn't run. Please try again." };
               }
             }}
           />
         ))}
       </ul>
+      <Toast flash={flash} />
 
       <Notice>
         Messenger and Instagram run in Meta development mode until App Review; WhatsApp test numbers reach up to 5 verified recipients.
@@ -151,10 +150,10 @@ function ChannelTitle({ kind }: { kind: keyof typeof CHANNEL_LABEL }) {
 
 function ChannelCard({ kind, connections, disabled, onConnect, onActive, onDisconnect, onTest }: {
   kind: Meta; connections: Connection[]; disabled: boolean;
-  onConnect: (b: { externalId: string; displayName?: string; accessToken: string }) => Promise<boolean>;
-  onActive: (id: string, active: boolean) => Promise<boolean>;
-  onDisconnect: (id: string) => Promise<boolean>;
-  onTest: (id: string) => Promise<void>;
+  onConnect: (b: { externalId: string; displayName?: string; accessToken: string }) => Promise<string | null>;
+  onActive: (id: string, active: boolean) => Promise<string | null>;
+  onDisconnect: (id: string) => Promise<string | null>;
+  onTest: (id: string) => Promise<TestResult>;
 }) {
   const spec = SPEC[kind];
   const [open, setOpen] = useState(false);
@@ -162,6 +161,9 @@ function ChannelCard({ kind, connections, disabled, onConnect, onActive, onDisco
   const [displayName, setDisplayName] = useState("");
   const [token, setToken] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [formErr, setFormErr] = useState<string | null>(null);
+  const [rowErr, setRowErr] = useState<Record<string, string | null>>({});
+  const [tests, setTests] = useState<Record<string, TestResult>>({});
   const connected = connections.length > 0;
   const showForm = !connected || open;
 
@@ -186,7 +188,7 @@ function ChannelCard({ kind, connections, disabled, onConnect, onActive, onDisco
         </div>
 
         {connections.map((c) => (
-          <div key={c.id} className="space-y-3 border border-line bg-sunk p-3">
+          <div key={c.id} className="rise space-y-3 border border-line bg-sunk p-3">
             <div className="min-w-0">
               <p className="truncate font-semibold text-strong">{c.displayName ?? spec.product}</p>
               <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 font-mono text-[11px]">
@@ -196,38 +198,65 @@ function ChannelCard({ kind, connections, disabled, onConnect, onActive, onDisco
               </dl>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Toggle checked={c.active} label={`${spec.product} ${c.externalId} active`} disabled={busy !== null} onChange={(v) => wrap(`a${c.id}`, () => onActive(c.id, v))} />
-              <Button size="sm" variant="outline" disabled={busy !== null} onClick={() => wrap(`t${c.id}`, () => onTest(c.id))}>{busy === `t${c.id}` ? "Testing…" : "Test"}</Button>
+              <Toggle checked={c.active} label={`${spec.product} ${c.externalId} active`} disabled={busy !== null} onChange={(v) => wrap(`a${c.id}`, async () => {
+                const e = await onActive(c.id, v);
+                setRowErr((r) => ({ ...r, [c.id]: e }));
+              })} />
               <Button
                 size="sm"
-                variant="ghost"
+                variant="outline"
+                className={TAP}
                 disabled={busy !== null}
-                onClick={() => confirm(`Disconnect ${spec.product}? Oja stops answering there and the token is deleted.`) && wrap(`d${c.id}`, () => onDisconnect(c.id))}
+                aria-busy={busy === `t${c.id}`}
+                onClick={() => wrap(`t${c.id}`, async () => {
+                  const r = await onTest(c.id);
+                  setTests((t) => ({ ...t, [c.id]: r }));
+                })}
               >
-                Disconnect
+                {busy === `t${c.id}` ? "Testing…" : "Test connection"}
               </Button>
+              <ConfirmButton
+                label="Disconnect"
+                prompt={`Disconnect ${spec.product}? Oja stops answering there and the token is deleted.`}
+                confirmLabel="Yes, disconnect"
+                busyLabel="Disconnecting…"
+                disabled={busy !== null}
+                onConfirm={() => wrap(`d${c.id}`, async () => {
+                  const e = await onDisconnect(c.id);
+                  setRowErr((r) => ({ ...r, [c.id]: e }));
+                })}
+              />
             </div>
+            {tests[c.id] && (
+              <p key={`${tests[c.id].ok}${tests[c.id].text}`} role="status" className={`rise border-l-2 pl-3 text-sm ${tests[c.id].ok ? "border-line-strong text-strong" : "border-dye font-semibold text-strong"}`}>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-muted">{tests[c.id].ok ? "Test passed" : "Test didn't pass"} · </span>
+                {tests[c.id].text}
+              </p>
+            )}
+            {rowErr[c.id] && <Notice key={rowErr[c.id]} tone="error">{rowErr[c.id]}</Notice>}
           </div>
         ))}
 
         <details className="group border-t border-line pt-3" open={!connected}>
-          <summary className="cursor-pointer font-mono text-[11px] uppercase tracking-wider text-muted hover:text-strong">Setup steps</summary>
+          <summary className="ease-ui cursor-pointer py-1 font-mono max-sm:py-3 text-[11px] uppercase tracking-wider text-muted hover:text-strong">Setup steps</summary>
           <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm text-text marker:font-mono marker:text-muted">
             {spec.steps.map((s) => <li key={s}>{s}</li>)}
           </ol>
         </details>
 
         {connected && !open && (
-          <Button size="sm" variant="outline" onClick={() => setOpen(true)}>Connect another {spec.product === "Messenger" ? "Page" : "account"}</Button>
+          <Button size="sm" variant="outline" className={`fade ${TAP}`} onClick={() => { setOpen(true); setFormErr(null); }}>Connect another {spec.product === "Messenger" ? "Page" : "account"}</Button>
         )}
-        {showForm && (
+        <Reveal open={showForm}>
           <form
             className="space-y-3"
             onSubmit={(e) => {
               e.preventDefault();
+              setFormErr(null);
               wrap("connect", async () => {
-                const ok = await onConnect({ externalId: externalId.trim(), accessToken: token.trim(), ...(displayName.trim() ? { displayName: displayName.trim() } : {}) });
-                if (ok) {
+                const err = await onConnect({ externalId: externalId.trim(), accessToken: token.trim(), ...(displayName.trim() ? { displayName: displayName.trim() } : {}) });
+                setFormErr(err);
+                if (!err) {
                   setExternalId("");
                   setDisplayName("");
                   setToken("");
@@ -239,12 +268,13 @@ function ChannelCard({ kind, connections, disabled, onConnect, onActive, onDisco
             <Field id={`${kind}-ext`} label={spec.idLabel} hint={spec.idHint} value={externalId} onChange={(e) => setExternalId(e.target.value)} required inputMode="numeric" autoComplete="off" className="font-mono" disabled={disabled} />
             <Field id={`${kind}-name`} label="Display name (optional)" hint="Only you see this." value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={80} disabled={disabled} />
             <Field id={`${kind}-token`} label={spec.tokenLabel} hint={`${spec.tokenHint} Stored encrypted; only the last characters are ever shown.`} type="password" value={token} onChange={(e) => setToken(e.target.value)} required autoComplete="off" spellCheck={false} className="font-mono" disabled={disabled} />
+            {formErr && <Notice key={formErr} tone="error">{formErr}</Notice>}
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" disabled={disabled || busy !== null || !externalId.trim() || !token.trim()}>{busy === "connect" ? "Connecting…" : `Connect ${spec.product}`}</Button>
-              {connected && <Button size="sm" type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>}
+              <Button size="sm" className={TAP} disabled={disabled || busy !== null || !externalId.trim() || !token.trim()}>{busy === "connect" ? "Connecting…" : `Connect ${spec.product}`}</Button>
+              {connected && <Button size="sm" type="button" variant="ghost" className={TAP} disabled={busy === "connect"} onClick={() => setOpen(false)}>Cancel</Button>}
             </div>
           </form>
-        )}
+        </Reveal>
       </div>
     </Swatch>
   );

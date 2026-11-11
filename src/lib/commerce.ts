@@ -2,7 +2,7 @@
 // Prices, delivery costs and totals are computed here from the database, never taken
 // from the model.
 
-import { and, asc, desc, eq, gt, ilike, or } from "drizzle-orm";
+import { and, asc, desc, eq, gt, ilike, isNull, or } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import type { DB } from "@/db";
 import {
@@ -51,14 +51,14 @@ export async function productForVendor(db: DB, vendorId: string, productId: stri
 
 export async function reviewsFor(db: DB, vendorId: string, productId?: string) {
   const where = productId
-    ? and(eq(reviews.vendorId, vendorId), or(eq(reviews.productId, productId)))
+    ? and(eq(reviews.vendorId, vendorId), or(eq(reviews.productId, productId), isNull(reviews.productId)))
     : eq(reviews.vendorId, vendorId);
   const rows = await db.select().from(reviews).where(where).orderBy(desc(reviews.createdAt)).limit(5);
   if (rows.length || !productId) return rows;
   return db.select().from(reviews).where(eq(reviews.vendorId, vendorId)).orderBy(desc(reviews.createdAt)).limit(5);
 }
 
-export async function deliveryQuote(db: DB, vendorId: string, country: string, region?: string): Promise<DeliveryQuote | null> {
+export async function deliveryQuote(db: DB, vendorId: string, country: string, region?: string | (string | null | undefined)[]): Promise<DeliveryQuote | null> {
   const zones = await db.select().from(deliveryZones).where(eq(deliveryZones.vendorId, vendorId));
   return quoteDelivery(zones, country, region);
 }
@@ -142,7 +142,7 @@ export type CheckoutDeps = {
 export async function placeOrder(db: DB, deps: CheckoutDeps, input: {
   vendor: Vendor; conv: Conversation;
   items: { productId: string; qty: number }[];
-  shipTo: ShipTo; buyerEmail?: string;
+  shipTo: ShipTo; buyerEmail?: string; note?: string;
 }): Promise<Order> {
   const { vendor, conv } = input;
   if (!input.items.length) throw new UserFacingError("The order has no items.");
@@ -156,7 +156,7 @@ export async function placeOrder(db: DB, deps: CheckoutDeps, input: {
     lines.push({ productId: product.id, name: product.name, qty: item.qty, unitPriceMinor: await agreedUnitPrice(db, vendor, conv, product, item.qty) });
     leadDays = Math.max(leadDays, product.leadTimeDays);
   }
-  const quote = await deliveryQuote(db, vendor.id, input.shipTo.country, input.shipTo.city);
+  const quote = await deliveryQuote(db, vendor.id, input.shipTo.country, [input.shipTo.city, input.shipTo.state]);
   if (!quote) throw new UserFacingError(`${vendor.name} doesn't deliver to ${input.shipTo.country} yet.`);
 
   const subtotal = lines.reduce((s, l) => s + l.unitPriceMinor * l.qty, 0);
@@ -176,14 +176,14 @@ export async function placeOrder(db: DB, deps: CheckoutDeps, input: {
       currency: "USD", lines, shippingMinor: quote.costMinor, shipTo: input.shipTo,
       returnUrl: `${deps.baseUrl}/pay/return?ref=${ref}`,
       cancelUrl: `${deps.baseUrl}/pay/cancel?ref=${ref}`,
-      note: `${vendor.name} order ${ref}`,
+      note: `${vendor.name} order ${ref}${input.note ? `: ${input.note}` : ""}`.slice(0, 500),
     });
     await db.update(orders).set({ paypalOrderId, paypalApproveUrl: approveUrl }).where(eq(orders.id, order.id));
     order.paypalOrderId = paypalOrderId;
     order.paypalApproveUrl = approveUrl;
   }
   await logEvent(db, { vendorId: vendor.id, orderId: order.id, conversationId: conv.id, type: "order.created",
-    data: { ref, totalMinor: total, currency: vendor.currency, rail, lines } });
+    data: { ref, totalMinor: total, currency: vendor.currency, rail, lines, note: input.note ?? null } });
   return order;
 }
 

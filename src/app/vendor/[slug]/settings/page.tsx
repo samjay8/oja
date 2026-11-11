@@ -1,9 +1,10 @@
 import { Suspense } from "react";
+import { Loading } from "@/components/desk/bits";
 import { SettingsEditor } from "./settings-editor";
 
 export default function SettingsPage(props: PageProps<"/vendor/[slug]/settings">) {
   return (
-    <Suspense fallback={<p className="px-4 py-10 text-sm text-muted sm:px-6">Loading…</p>}>
+    <Suspense fallback={<Loading label="Opening your settings…" layout="form" />}>
       <Settings params={props.params} />
     </Suspense>
   );

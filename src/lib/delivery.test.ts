@@ -15,6 +15,10 @@ describe("quoteDelivery", () => {
     expect(quoteDelivery(zones, "GB")).toMatchObject({ costMinor: 3500, matched: "country" });
     expect(quoteDelivery(zones, "US")).toMatchObject({ costMinor: 4500, matched: "fallback" });
   });
+  it("matches a zone by the state when the city isn't listed (Lekki, Lagos)", () => {
+    expect(quoteDelivery(zones, "NG", ["Lekki", "Lagos"])).toMatchObject({ costMinor: 300, matched: "region" });
+    expect(quoteDelivery(zones.slice(0, 1), "NG", ["Lekki", undefined])).toBeNull();
+  });
   it("returns null when the vendor doesn't ship there", () => {
     expect(quoteDelivery(zones.slice(0, 3), "US")).toBeNull();
   });
