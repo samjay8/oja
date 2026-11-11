@@ -1,14 +1,12 @@
 import Link from "next/link";
-import { buttonClass, CHANNEL_LABEL, ChannelGlyph, Kicker, PatternBand, Price, Stamp, Swatch, Tag, Wordmark, type ChannelKind } from "@/components/ui";
+import { buttonClass, CHANNEL_LABEL, ChannelGlyph, Kicker, PatternBand, Stamp, Tag, type ChannelKind } from "@/components/ui";
+import { DEMO_SHOP, Section, SELLER_DESK, SiteFooter, SiteHeader } from "@/components/site/chrome";
 import { LANGUAGE_CODES, LANGUAGES } from "@/lib/languages";
 
-const DEMO_SHOP = "/shop/ife-textiles";
-const SELLER_DESK = "/vendor/ife-textiles";
-
 const findings = [
-  { n: 5, t: "said delivery cost or time loses sales", q: "“Delivery was delayed.”" },
-  { n: 4, t: "said buyers stop replying", q: "“Before my rep could get back to them they had messaged another vendor.”" },
-  { n: 4, t: "buyers had been scammed, or nearly", q: "“The seller wanted me to pay to an account that wasn't the company's account.”" },
+  { n: 5, t: "lose sales to delivery cost or time", q: "“Delivery was delayed.”" },
+  { n: 4, t: "say buyers stop replying", q: "“Before my rep could get back to them they had messaged another vendor.”" },
+  { n: 4, t: "buyers were scammed, or nearly", q: "“The seller wanted me to pay to an account that wasn't the company's account.”" },
 ];
 
 const steps = [
@@ -19,194 +17,170 @@ const steps = [
 ];
 
 const guards = [
-  { t: "Money lives in code", d: "Prices, floors, delivery and totals are computed by Oja's own functions. The model only asks for them." },
-  { t: "The money guard", d: "Any reply with an amount or a link the code didn't make is held for the seller, never sent." },
+  { t: "Money lives in code", d: "Prices, floors, delivery and totals come from Oja's own functions. The model only asks for them." },
+  { t: "A guard on every reply", d: "A reply with an amount or link the code didn't make is held for the seller, never sent." },
   { t: "Copilot by default", d: "New shops approve every draft. Switch to autopilot when you trust it." },
 ];
 
 const channels: ChannelKind[] = ["web", "whatsapp", "messenger", "instagram"];
 
+const h2 = "font-display text-[1.625rem] leading-[1.15] text-strong sm:text-[2rem]";
+
 export default function Home() {
   return (
     <div className="smooth-scroll flex flex-1 flex-col">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-8">
-        <Link href="/" aria-label="Oja home"><Wordmark size="sm" /></Link>
-        <nav className="fade flex items-center gap-1 text-sm">
-          <a href="#how" className={buttonClass({ variant: "ghost", size: "sm" }) + " hidden sm:inline-flex"}>How it works</a>
-          <Link href={DEMO_SHOP} className={buttonClass({ variant: "ghost", size: "sm" })}>Demo shop</Link>
-          <Link href={SELLER_DESK} className={buttonClass({ variant: "ghost", size: "sm" })}>Seller desk</Link>
-        </nav>
-      </header>
+      <SiteHeader greet />
 
       <main className="flex-1">
-        {/* Hero */}
-        <section className="relative overflow-hidden border-y border-line">
-          <PatternBand pattern="olokun" className="pointer-events-none absolute inset-0 opacity-70" />
-          <div className="relative mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-8 sm:py-20 lg:grid-cols-[1.25fr_1fr] lg:items-end">
-            <div className="stagger min-w-0">
-              <Kicker className="enter">Ọjà · Yorùbá for “market”</Kicker>
-              <p aria-hidden className="enter mt-2 font-display text-[7.5rem] leading-[0.8] tracking-tight text-strong sm:text-[12rem] lg:text-[15rem]">Ọjà</p>
-              <h1 className="enter mt-6 max-w-2xl font-display text-4xl leading-[1.05] text-strong sm:text-6xl">
-                The AI sales agent that closes the chat and gets you paid.
-              </h1>
-              <p className="enter mt-5 max-w-[60ch] text-lg leading-relaxed text-text">
-                Buyers ask, haggle and go quiet. Oja answers in seconds from your real catalog, holds your price floor,
-                quotes delivery and sends a PayPal checkout to your own verified account.
-              </p>
-              <div className="enter mt-8 flex flex-wrap gap-3">
-                <Link href={DEMO_SHOP} className={buttonClass({ size: "lg" })}>Try the demo shop</Link>
-                <Link href={SELLER_DESK} className={buttonClass({ variant: "outline", size: "lg" })}>Open the seller desk</Link>
-              </div>
+        {/* Hero: one statement, one quiet proof */}
+        <section className="mx-auto grid max-w-6xl gap-12 px-4 pb-16 pt-10 sm:px-8 sm:pb-24 sm:pt-16 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-end lg:gap-16">
+          <div className="stagger min-w-0">
+            <Kicker className="enter">Ọjà · Yorùbá for “market”</Kicker>
+            <h1 className="enter mt-5 max-w-[17ch] font-display text-[2rem] leading-[1.1] text-strong sm:text-[2.75rem] lg:text-[3.25rem] lg:leading-[1.06]">
+              The AI sales agent that closes the chat and gets you paid.
+            </h1>
+            <p className="enter mt-6 max-w-[54ch] text-base leading-relaxed text-text sm:text-lg">
+              Oja answers buyers in seconds from your real catalog, holds your price floor, quotes delivery and sends a
+              PayPal checkout to your own verified account.
+            </p>
+            <div className="enter mt-8 flex flex-wrap gap-3">
+              <Link href={DEMO_SHOP} className={buttonClass({ size: "lg" })}>Try the demo shop <span aria-hidden className="nudge">→</span></Link>
+              <Link href={SELLER_DESK} className={buttonClass({ variant: "outline", size: "lg" })}>Open the seller desk</Link>
             </div>
-            <SampleReceipt />
           </div>
+          <ChatSnippet />
         </section>
 
-        {/* Problem */}
-        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-8">
-          <Kicker>What we heard in the market</Kicker>
-          <h2 className="mt-2 max-w-3xl font-display text-3xl leading-tight text-strong sm:text-5xl">
-            Sales die in the chat, between the price and the payment.
-          </h2>
-          <ul className="mt-10 grid gap-4 md:grid-cols-3">
+        <PatternBand pattern="stitch" className="h-2.5 border-t border-line" />
+
+        {/* What we heard */}
+        <Section label="What we heard">
+          <h2 className={h2 + " max-w-[26ch]"}>Sales die in the chat, between the price and the payment.</h2>
+          <dl className="mt-10 grid gap-x-10 sm:grid-cols-3">
             {findings.map((f) => (
-              <Swatch key={f.t} as="li" pattern="stitch" className="lift flex flex-col">
-                <div className="flex flex-1 flex-col p-5">
-                  <p className="font-mono text-5xl tabular-nums text-strong">
-                    {f.n}<span className="text-2xl text-muted">/6</span>
-                  </p>
-                  <p className="mt-2 font-semibold text-strong">{f.t}</p>
-                  <p className="mt-4 flex-1 font-display text-lg leading-snug text-text">{f.q}</p>
-                </div>
-              </Swatch>
+              <div key={f.t} className="border-t border-line py-5">
+                <dt className="font-mono text-[1.75rem] tabular-nums leading-none text-strong">
+                  {f.n}<span className="text-base text-muted">/6</span>
+                </dt>
+                <dd className="mt-3 font-semibold text-strong">{f.t}</dd>
+                <dd className="mt-2 text-[15px] leading-snug text-muted">{f.q}</dd>
+              </div>
             ))}
-          </ul>
+          </dl>
           <p className="mt-4 font-mono text-[11px] uppercase tracking-wider text-muted">
             Source: 6 seller and buyer interviews, Nigeria, Oct–Nov 2026
           </p>
-          <p className="mt-8 max-w-2xl border-l-2 border-dye pl-4 font-display text-2xl leading-snug text-strong">
-            For buyers: pay the real business, with PayPal protection, and know when it arrives.
-          </p>
-        </section>
+        </Section>
 
         {/* How it works */}
-        <section id="how" className="scroll-mt-4 border-y border-line bg-sunk">
-          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-8">
-            <Kicker>How it works</Kicker>
-            <h2 className="mt-2 font-display text-3xl text-strong sm:text-5xl">Four steps, one conversation.</h2>
-            <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {steps.map((s, i) => (
-                <Swatch key={s.t} as="li" className="lift p-5">
-                  <p className="font-mono text-xs tracking-[0.2em] text-muted">STEP {String(i + 1).padStart(2, "0")}</p>
-                  <h3 className="mt-3 font-display text-2xl leading-tight text-strong">{s.t}</h3>
-                  <p className="mt-2 text-sm text-text">{s.d}</p>
-                </Swatch>
-              ))}
-            </ol>
-          </div>
-        </section>
+        <Section id="how" label="How it works">
+          <h2 className={h2}>Four steps, one conversation.</h2>
+          <ol className="mt-10 grid gap-x-10 sm:grid-cols-2">
+            {steps.map((s, i) => (
+              <li key={s.t} className="grid grid-cols-[2.25rem_1fr] border-t border-line py-5">
+                <span className="pt-1 font-mono text-xs tabular-nums text-muted">{String(i + 1).padStart(2, "0")}</span>
+                <div>
+                  <h3 className="text-lg font-semibold text-strong">{s.t}</h3>
+                  <p className="mt-1 leading-relaxed text-text">{s.d}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </Section>
 
         {/* Channels + languages */}
-        <section className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-8 lg:grid-cols-2">
-          <div>
-            <Kicker>One agent, every chat</Kicker>
-            <h2 className="mt-2 font-display text-3xl text-strong sm:text-4xl">Where your buyers already talk.</h2>
-            <ul className="mt-6 grid grid-cols-2 border-l border-t border-line">
+        <Section label="Reach">
+          <h2 className={h2 + " max-w-[24ch]"}>Where your buyers are, in their language.</h2>
+          <div className="mt-10 grid gap-8 border-t border-line pt-6 md:grid-cols-2 md:gap-10">
+            <ul className="grid grid-cols-2 gap-x-6 gap-y-3" aria-label="Channels">
               {channels.map((c) => (
-                <li key={c} className="flex items-center gap-3 border-b border-r border-line bg-surface px-4 py-4 text-strong">
-                  <ChannelGlyph kind={c} className="size-6 shrink-0" />
+                <li key={c} className="inline-flex items-center gap-2 text-strong">
+                  <ChannelGlyph kind={c} className="size-5 shrink-0 text-dye" />
                   <span className="font-semibold">{CHANNEL_LABEL[c]}</span>
                 </li>
               ))}
+              <li className="col-span-2"><Tag dashed>More coming</Tag></li>
             </ul>
-            <p className="mt-3"><Tag dashed>More coming</Tag></p>
+            <div>
+              <ul className="flex flex-wrap gap-x-4 gap-y-2" aria-label="Languages">
+                {LANGUAGE_CODES.map((c) => {
+                  const l = LANGUAGES[c];
+                  return (
+                    <li key={c} lang={c} className="inline-flex items-baseline gap-1.5 text-strong">
+                      {l.native}
+                      {l.beta && <span lang="en" className="font-mono text-[10px] uppercase tracking-wider text-muted">beta</span>}
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="mt-4 text-sm text-muted">
+                Beta languages haven&apos;t been reviewed by native speakers yet. Prices always stay digits from the code.
+              </p>
+            </div>
           </div>
-          <div>
-            <Kicker>Speaks the buyer&apos;s language</Kicker>
-            <h2 className="mt-2 font-display text-3xl text-strong sm:text-4xl">From Lagos to Lyon to Shenzhen.</h2>
-            <ul className="mt-6 flex flex-wrap gap-2">
-              {LANGUAGE_CODES.map((c) => {
-                const l = LANGUAGES[c];
-                return (
-                  <li key={c} lang={c} className="flex items-center gap-2 border border-line bg-surface px-3 py-2">
-                    <span className="font-semibold text-strong">{l.native}</span>
-                    {l.beta && <Tag dashed>beta</Tag>}
-                  </li>
-                );
-              })}
-            </ul>
-            <p className="mt-3 text-sm text-muted">Beta languages haven&apos;t been reviewed by native speakers yet. Prices always stay as digits from the code.</p>
-          </div>
-        </section>
+        </Section>
 
         {/* Safety */}
-        <section className="relative overflow-hidden bg-dye text-on-dye">
-          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-8">
-            <div className="flex flex-wrap items-center gap-3">
-              <p className="font-mono text-[11px] uppercase tracking-[0.22em] opacity-80">Safety</p>
-              <span className="inline-block -rotate-2 border-2 border-on-dye px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.18em]">Enforced in code</span>
+        <section className="bg-aro-900 text-aro-50">
+          <div className="mx-auto grid max-w-6xl gap-6 px-4 py-16 sm:px-8 sm:py-20 lg:grid-cols-[12rem_1fr] lg:gap-12">
+            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-aro-300 lg:pt-2">Enforced in code</p>
+            <div className="min-w-0">
+              <h2 className="font-display text-[1.625rem] leading-[1.15] sm:text-[2rem]">The AI never touches the money.</h2>
+              <ul className="mt-10 grid gap-x-10 md:grid-cols-3">
+                {guards.map((g) => (
+                  <li key={g.t} className="border-t border-aro-700 py-5">
+                    <h3 className="font-semibold">{g.t}</h3>
+                    <p className="mt-1 text-[15px] leading-relaxed text-aro-200">{g.d}</p>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <h2 className="mt-3 max-w-3xl font-display text-4xl leading-tight sm:text-6xl">The AI never touches the money.</h2>
-            <ul className="mt-10 grid gap-px bg-on-dye/25 md:grid-cols-3">
-              {guards.map((g, i) => (
-                <li key={g.t} className="bg-dye p-5">
-                  <p className="font-mono text-xs opacity-70">{String(i + 1).padStart(2, "0")}</p>
-                  <h3 className="mt-2 text-lg font-semibold">{g.t}</h3>
-                  <p className="mt-1 text-sm opacity-85">{g.d}</p>
-                </li>
-              ))}
-            </ul>
           </div>
         </section>
 
-        {/* Closing CTA */}
-        <section className="mx-auto max-w-6xl px-4 py-16 text-center sm:px-8">
-          <p className="font-display text-4xl text-strong sm:text-5xl">Walk into the stall.</p>
-          <p className="mx-auto mt-3 max-w-lg text-text">Chat with Ifẹ́ Textiles as a buyer, haggle a little, then watch the same chat from the seller&apos;s desk.</p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link href={DEMO_SHOP} className={buttonClass({ size: "lg" })}>Try the demo shop</Link>
-            <Link href={SELLER_DESK} className={buttonClass({ variant: "outline", size: "lg" })}>Open the seller desk</Link>
+        {/* Closing */}
+        <section className="mx-auto grid max-w-6xl gap-6 px-4 py-20 sm:px-8 sm:py-24 lg:grid-cols-[12rem_1fr] lg:gap-12">
+          <span aria-hidden className="hidden lg:block" />
+          <div className="min-w-0">
+            <h2 className={h2}>Walk into the stall.</h2>
+            <p className="mt-3 max-w-[52ch] text-base leading-relaxed text-text sm:text-lg">
+              Chat with Ifẹ́ Textiles as a buyer, haggle a little, then watch the same chat from the seller&apos;s desk.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href={DEMO_SHOP} className={buttonClass({ size: "lg" })}>Try the demo shop <span aria-hidden className="nudge">→</span></Link>
+              <Link href={SELLER_DESK} className={buttonClass({ variant: "outline", size: "lg" })}>Open the seller desk</Link>
+            </div>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-line">
-        <PatternBand pattern="dots" className="h-4 border-b border-line" />
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-6 sm:px-8">
-          <Wordmark size="sm" kicker={false} />
-          <p className="font-mono text-[11px] uppercase tracking-wider text-muted">
-            Hackathon build · PayPal sandbox only · demo shops are sample data
-          </p>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
 
-/** Illustrative sample: a haggle closed into a stamped receipt. */
-function SampleReceipt() {
+/** Illustrative sample: three messages that end in a paid order. */
+function ChatSnippet() {
   return (
-    <figure aria-label="Example: a chat that ends in a paid order" className="enter w-full max-w-sm justify-self-center lg:justify-self-end" style={{ animationDelay: "240ms" }}>
-      <div className="receipt-edge border border-b-0 border-line bg-surface px-5 pt-5 shadow-[6px_6px_0_0_var(--line)]">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <Kicker>Order</Kicker>
-            <p className="font-mono text-sm text-strong">OJA-7K2Q</p>
-          </div>
-          <Stamp filled className="text-xs">Paid</Stamp>
+    <figure aria-label="Example chat that ends in a paid order" className="enter w-full max-w-md justify-self-start lg:justify-self-end" style={{ animationDelay: "240ms" }}>
+      <div className="border border-line bg-surface">
+        <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-2.5">
+          <span className="text-sm font-semibold text-strong">Ifẹ́ Textiles</span>
+          <span className="font-mono text-[10px] uppercase tracking-wider text-muted">Oja · AI assistant</span>
         </div>
-        <div className="mt-4 space-y-2 text-sm">
+        <div className="space-y-2.5 px-4 py-4 text-[15px] leading-snug">
           <p className="ml-auto w-fit max-w-[85%] bg-dye px-3 py-2 text-on-dye">Last price for the adire two-piece?</p>
-          <p className="w-fit max-w-[85%] border border-line px-3 py-2 text-text">I can do $76 for you. Delivery to London is $38 by DHL Express, 4–6 days, tracked.</p>
+          <p className="w-fit max-w-[88%] border border-line px-3 py-2 text-text">
+            I can do <span className="font-mono text-sm">$76</span>. Delivery to London is <span className="font-mono text-sm">$38</span> by DHL Express, 4–6 days, tracked.
+          </p>
+          <p className="ml-auto w-fit max-w-[85%] bg-dye px-3 py-2 text-on-dye">Deal. How do I pay?</p>
         </div>
-        <dl className="mt-4 space-y-1 border-t border-dashed border-line-strong pt-3 font-mono text-xs text-text">
-          <div className="flex justify-between"><dt>Adire two-piece × 1</dt><dd><Price size="sm">$76.00</Price></dd></div>
-          <div className="flex justify-between"><dt>Delivery · DHL Express</dt><dd><Price size="sm">$38.00</Price></dd></div>
-          <div className="flex justify-between border-t border-line pt-1 font-bold text-strong"><dt>Total</dt><dd><Price size="sm">$114.00</Price></dd></div>
-        </dl>
-        <p className="mt-3 pb-3 font-mono text-[10px] uppercase tracking-wider text-muted">Paid to verified payee · Ifẹ́ Textiles</p>
+        <div className="flex items-center justify-between gap-3 border-t border-dashed border-line-strong px-4 py-3">
+          <span className="font-mono text-xs text-text">PayPal checkout · <span className="tabular-nums text-strong">$114.00</span></span>
+          <Stamp filled>Paid</Stamp>
+        </div>
       </div>
-      <figcaption className="mt-3 text-center font-mono text-[10px] uppercase tracking-wider text-muted">Sample receipt</figcaption>
+      <figcaption className="mt-3 font-mono text-[10px] uppercase tracking-wider text-muted">Sample chat · demo data</figcaption>
     </figure>
   );
 }

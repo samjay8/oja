@@ -11,17 +11,18 @@ const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).jo
  * (the chat); the dot beneath it is the coin that drops out of it (the sale).
  * Drawn in currentColor, so it takes whatever ink it sits in.
  */
-export function Logomark({ className = "size-7", title }: { className?: string; title?: string }) {
+export function Logomark({ className = "size-7", title, greet = false }: { className?: string; title?: string; /** Drop the àmì into place once on load. */ greet?: boolean }) {
   return (
-    <svg viewBox="0 0 40 40" className={className} role={title ? "img" : undefined} aria-hidden={title ? undefined : true} aria-label={title}>
+    <svg viewBox="0 0 40 40" className={cx("oja-mark overflow-visible", greet && "oja-mark-greet", className)} role={title ? "img" : undefined} aria-hidden={title ? undefined : true} aria-label={title}>
       <path
+        className="oja-bubble"
         d="M15.35 26.97 A11 11 0 1 0 10.99 23.31 L9 30 Z"
         fill="none"
         stroke="currentColor"
         strokeWidth="3.4"
         strokeLinejoin="round"
       />
-      <circle cx="20" cy="35.4" r="2.7" fill="currentColor" />
+      <circle className="oja-dot" cx="20" cy="35.4" r="2.7" fill="currentColor" />
     </svg>
   );
 }
@@ -31,7 +32,7 @@ export function Wordmark({ size = "md", kicker = true, mark = true }: { size?: "
   const s = size === "lg" ? "text-6xl sm:text-8xl" : size === "sm" ? "text-2xl" : "text-3xl";
   const m = size === "lg" ? "size-14 sm:size-20" : size === "sm" ? "size-6" : "size-8";
   return (
-    <span className="inline-flex items-center gap-2 text-strong">
+    <span className="oja-live inline-flex items-center gap-2 text-strong">
       {mark && <Logomark className={cx(m, "shrink-0")} />}
       <span className="inline-flex items-baseline gap-2">
         <span lang="yo" className={cx("font-display leading-none tracking-tight", s)}>Ọjà</span>
@@ -48,8 +49,8 @@ export function buttonClass({ variant = "solid", size = "md" }: Pick<ButtonProps
     "inline-flex items-center justify-center gap-2 font-semibold transition-[background-color,border-color,color,box-shadow,transform,opacity,outline-color,outline-offset] duration-200 ease-[cubic-bezier(.2,.7,.2,1)] active:duration-100 disabled:cursor-not-allowed disabled:opacity-40",
     size === "sm" ? "h-8 px-3 text-xs" : size === "lg" ? "h-12 px-6 text-base" : "h-10 px-4 text-sm",
     // Solid presses into its own offset shadow, like a stamp meeting paper.
-    variant === "solid" && "bg-dye text-on-dye shadow-[3px_3px_0_0_var(--dye-deep)] hover:shadow-[1px_1px_0_0_var(--dye-deep)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[0_0_0_0_var(--dye-deep)]",
-    variant === "outline" && "border border-dye text-dye hover:bg-wash active:translate-y-px",
+    variant === "solid" && "bg-dye text-on-dye shadow-[3px_3px_0_0_var(--dye-deep)] hover:-translate-x-px hover:-translate-y-px hover:shadow-[4px_4px_0_0_var(--dye-deep)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[0_0_0_0_var(--dye-deep)]",
+    variant === "outline" && "border border-dye text-dye hover:bg-wash hover:shadow-[inset_0_0_0_1px_var(--dye)] active:translate-y-px",
     variant === "ghost" && "text-muted hover:bg-wash hover:text-strong active:translate-y-px",
   );
 }

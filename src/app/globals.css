@@ -192,7 +192,7 @@ body {
 
 /* ---- Motion ----
   Calm, never playful: no bounce, overshoot, scale-pop, parallax or shimmer.
-  The typing dots are the only thing that loops.
+  The typing dots and the mark's àmì blink (see Living mark) are the only loops.
   Short and soft: 160–280ms for feedback, up to ~500ms for one page entrance.
   Ease-out entering, ease-in leaving. Move 6px at most; prefer opacity.
   Motion only where it helps: new messages, typing, receipts, hover/press,
@@ -318,4 +318,81 @@ body {
   .lift:hover { transform: none; }
   .lift, .ease-ui, .reveal, .pop, .pop[data-open="false"], .reveal[data-open="false"] { transition-duration: 0s; transition-delay: 0s; }
   .pop[data-open="false"] { transform: none; }
+}
+
+/* ---- Living mark (Logomark) ----
+  The mark is the one other thing allowed to loop: a soft blink of the àmì
+  (the coin under the Ọ) once every ~8s, like an assistant that is present but
+  not talking. Hover/focus on anything carrying the mark: the dot lifts 3px and
+  settles (a nod), the bubble leans in. `.oja-mark-greet` drops the dot into
+  place once on load. All of it is off under reduced motion.
+*/
+@keyframes oja-blink {
+  0%, 93%, 100% { opacity: 1; }
+  96% { opacity: 0.25; }
+}
+@keyframes oja-nod {
+  0% { transform: translateY(0); }
+  45% { transform: translateY(-3px); }
+  100% { transform: translateY(0); }
+}
+@keyframes oja-drop {
+  from { opacity: 0; transform: translateY(-6px); }
+}
+
+.oja-dot,
+.oja-bubble {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.oja-dot { animation: oja-blink 8s ease-in-out 3s infinite; }
+.oja-bubble { transition: transform var(--dur-3) var(--ease-out); }
+.oja-mark-greet .oja-dot {
+  animation:
+    oja-drop var(--dur-enter) var(--ease-out) 240ms both,
+    oja-blink 8s ease-in-out 4s infinite;
+}
+
+:is(a, button, .oja-live):is(:hover, :focus-visible) .oja-dot {
+  animation: oja-nod 380ms var(--ease-out) both;
+}
+:is(a, button, .oja-live):is(:hover, :focus-visible) .oja-bubble {
+  transform: rotate(-8deg) scale(1.04);
+}
+
+/* The greeting that answers a hover on the header mark. Never takes clicks. */
+.oja-greet {
+  opacity: 0;
+  transform: translateX(-4px);
+  pointer-events: none;
+  transition:
+    opacity var(--dur-1) var(--ease-in),
+    transform var(--dur-1) var(--ease-in);
+}
+:is(a, .oja-live):is(:hover, :focus-visible) .oja-greet {
+  opacity: 1;
+  transform: translateX(0);
+  transition:
+    opacity var(--dur-3) var(--ease-out) 80ms,
+    transform var(--dur-3) var(--ease-out) 80ms;
+}
+
+/* Text link with an underline that draws in, and an arrow that leans forward. */
+.ink-link {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size var(--dur-3) var(--ease-out), color var(--dur-2) var(--ease-out);
+}
+.ink-link:hover, .ink-link:focus-visible { background-size: 100% 1px; }
+.nudge { display: inline-block; transition: transform var(--dur-2) var(--ease-out); }
+:is(a, button):is(:hover, :focus-visible) .nudge { transform: translateX(3px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .oja-dot, .oja-mark-greet .oja-dot,
+  :is(a, button, .oja-live):is(:hover, :focus-visible) .oja-dot { animation: none; }
+  .oja-bubble, .oja-greet, .ink-link, .nudge { transition-duration: 0s; transition-delay: 0s; }
+  :is(a, button, .oja-live):is(:hover, :focus-visible) .oja-bubble { transform: none; }
+  .oja-greet, :is(a, button):is(:hover, :focus-visible) .nudge { transform: none; }
 }
