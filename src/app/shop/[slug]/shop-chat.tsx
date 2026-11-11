@@ -297,8 +297,8 @@ export function ShopChat({ shop, shopName, notice }: { shop: string; shopName: s
         <div ref={listRef} onScroll={onScroll} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 sm:px-4">
           <div ref={contentRef}>
             {empty && (
-              <div className="fade adire-dots mx-auto max-w-md border border-dashed border-line-strong px-4 py-8 text-center">
-                <p className="font-display text-2xl leading-tight text-strong">{t.welcome(shopName)}</p>
+              <div className="fade mx-auto max-w-md px-2 py-8 text-center sm:py-12">
+                <p className="font-display text-xl leading-snug text-strong sm:text-2xl">{t.welcome(shopName)}</p>
                 <p className="mt-2 text-sm text-muted" lang="en">Not sure where to start? Tap a question.</p>
                 <div className="stagger mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-center" lang="en">
                   {SUGGESTIONS.map((s) => (

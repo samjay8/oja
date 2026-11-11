@@ -15,6 +15,13 @@
       "when": 1794352939168,
       "tag": "0001_odd_tigra",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794437888692,
+      "tag": "0002_condemned_exiles",
+      "breakpoints": true
     }
   ]
 }

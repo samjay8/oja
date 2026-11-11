@@ -6,13 +6,19 @@ import { ConfirmButton, CopyLine, DeskHeading, Loading, Notice, Reveal, sendJson
 import { SignIn } from "@/components/desk/sign-in";
 
 type Meta = "whatsapp" | "messenger" | "instagram";
-type Connection = { id: string; channel: Meta; externalId: string; displayName: string | null; active: boolean; tokenHint: string; createdAt: string };
+type Connection = {
+  id: string; channel: Meta; externalId: string; displayName: string | null;
+  publicHandle: string | null; link: string | null; active: boolean; tokenHint: string; createdAt: string;
+};
 type TestResult = { ok: boolean; text: string };
 type ChannelsData = { webhookUrl: string; verifyTokenConfigured: boolean; appSecretConfigured: boolean; channels: Connection[] };
 
-const SPEC: Record<Meta, { product: string; idLabel: string; idHint: string; tokenLabel: string; tokenHint: string; steps: string[] }> = {
+const SPEC: Record<Meta, { product: string; idLabel: string; idHint: string; tokenLabel: string; tokenHint: string; handleLabel: string; handleHint: string; handlePlaceholder: string; steps: string[] }> = {
   whatsapp: {
     product: "WhatsApp",
+    handleLabel: "Public number",
+    handleHint: "The business number buyers message, with country code. Spaces and + are fine.",
+    handlePlaceholder: "+234 801 234 5678",
     idLabel: "Phone number ID",
     idHint: "WhatsApp › API Setup, under your test or business number. Not the phone number itself.",
     tokenLabel: "Permanent access token",
@@ -26,6 +32,9 @@ const SPEC: Record<Meta, { product: string; idLabel: string; idHint: string; tok
   },
   messenger: {
     product: "Messenger",
+    handleLabel: "Page username",
+    handleHint: "From facebook.com/<username>. The numeric Page ID works too.",
+    handlePlaceholder: "ifetextiles",
     idLabel: "Facebook Page ID",
     idHint: "Your Page › About › Page transparency, or Messenger › Settings in the app.",
     tokenLabel: "Page access token",
@@ -39,6 +48,9 @@ const SPEC: Record<Meta, { product: string; idLabel: string; idHint: string; tok
   },
   instagram: {
     product: "Instagram",
+    handleLabel: "Instagram username",
+    handleHint: "Without the @.",
+    handlePlaceholder: "ife.textiles",
     idLabel: "Instagram professional account ID",
     idHint: "The numeric ID of your Business or Creator account, shown in the app's Instagram › API setup.",
     tokenLabel: "Instagram access token",
@@ -114,6 +126,7 @@ export function ChannelsDesk({ slug }: { slug: string }) {
             disabled={unavailable}
             connections={data?.channels.filter((c) => c.channel === k) ?? []}
             onConnect={(body) => run(() => sendJson(api, "POST", { channel: k, ...body }), `${CHANNEL_LABEL[k]} connected. Send a test message from another account.`)}
+            onHandle={(id, publicHandle) => run(() => sendJson(api, "PATCH", { id, publicHandle }), publicHandle ? "Buyer link saved." : "Buyer link removed.")}
             onActive={(id, active) => run(() => sendJson(api, "PATCH", { id, active }), active ? `${CHANNEL_LABEL[k]} is live.` : `${CHANNEL_LABEL[k]} is paused. Messages won't be answered.`)}
             onDisconnect={(id) => run(() => sendJson(`${api}?id=${encodeURIComponent(id)}`, "DELETE"), `${CHANNEL_LABEL[k]} disconnected and its token deleted.`)}
             onTest={async (id) => {
@@ -148,9 +161,10 @@ function ChannelTitle({ kind }: { kind: keyof typeof CHANNEL_LABEL }) {
   );
 }
 
-function ChannelCard({ kind, connections, disabled, onConnect, onActive, onDisconnect, onTest }: {
+function ChannelCard({ kind, connections, disabled, onConnect, onHandle, onActive, onDisconnect, onTest }: {
   kind: Meta; connections: Connection[]; disabled: boolean;
-  onConnect: (b: { externalId: string; displayName?: string; accessToken: string }) => Promise<string | null>;
+  onConnect: (b: { externalId: string; displayName?: string; publicHandle?: string; accessToken: string }) => Promise<string | null>;
+  onHandle: (id: string, publicHandle: string) => Promise<string | null>;
   onActive: (id: string, active: boolean) => Promise<string | null>;
   onDisconnect: (id: string) => Promise<string | null>;
   onTest: (id: string) => Promise<TestResult>;
@@ -159,6 +173,7 @@ function ChannelCard({ kind, connections, disabled, onConnect, onActive, onDisco
   const [open, setOpen] = useState(false);
   const [externalId, setExternalId] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [handle, setHandle] = useState("");
   const [token, setToken] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [formErr, setFormErr] = useState<string | null>(null);
@@ -227,6 +242,14 @@ function ChannelCard({ kind, connections, disabled, onConnect, onActive, onDisco
                 })}
               />
             </div>
+            <BuyerLink kind={kind} conn={c} disabled={busy !== null} onSave={async (v) => {
+              let e: string | null = null;
+              await wrap(`h${c.id}`, async () => {
+                e = await onHandle(c.id, v);
+                setRowErr((r) => ({ ...r, [c.id]: e }));
+              });
+              return e;
+            }} />
             {tests[c.id] && (
               <p key={`${tests[c.id].ok}${tests[c.id].text}`} role="status" className={`rise border-l-2 pl-3 text-sm ${tests[c.id].ok ? "border-line-strong text-strong" : "border-dye font-semibold text-strong"}`}>
                 <span className="font-mono text-[10px] uppercase tracking-wider text-muted">{tests[c.id].ok ? "Test passed" : "Test didn't pass"} · </span>
@@ -254,11 +277,16 @@ function ChannelCard({ kind, connections, disabled, onConnect, onActive, onDisco
               e.preventDefault();
               setFormErr(null);
               wrap("connect", async () => {
-                const err = await onConnect({ externalId: externalId.trim(), accessToken: token.trim(), ...(displayName.trim() ? { displayName: displayName.trim() } : {}) });
+                const err = await onConnect({
+                  externalId: externalId.trim(), accessToken: token.trim(),
+                  ...(displayName.trim() ? { displayName: displayName.trim() } : {}),
+                  ...(handle.trim() ? { publicHandle: handle.trim() } : {}),
+                });
                 setFormErr(err);
                 if (!err) {
                   setExternalId("");
                   setDisplayName("");
+                  setHandle("");
                   setToken("");
                   setOpen(false);
                 }
@@ -267,6 +295,7 @@ function ChannelCard({ kind, connections, disabled, onConnect, onActive, onDisco
           >
             <Field id={`${kind}-ext`} label={spec.idLabel} hint={spec.idHint} value={externalId} onChange={(e) => setExternalId(e.target.value)} required inputMode="numeric" autoComplete="off" className="font-mono" disabled={disabled} />
             <Field id={`${kind}-name`} label="Display name (optional)" hint="Only you see this." value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={80} disabled={disabled} />
+            <Field id={`${kind}-handle`} label={`${spec.handleLabel} (optional)`} hint={`${spec.handleHint} Gives buyers a link that opens a chat with your Oja agent.`} placeholder={spec.handlePlaceholder} value={handle} onChange={(e) => setHandle(e.target.value)} maxLength={80} autoComplete="off" spellCheck={false} className="font-mono" disabled={disabled} />
             <Field id={`${kind}-token`} label={spec.tokenLabel} hint={`${spec.tokenHint} Stored encrypted; only the last characters are ever shown.`} type="password" value={token} onChange={(e) => setToken(e.target.value)} required autoComplete="off" spellCheck={false} className="font-mono" disabled={disabled} />
             {formErr && <Notice key={formErr} tone="error">{formErr}</Notice>}
             <div className="flex flex-wrap gap-2">
@@ -277,5 +306,52 @@ function ChannelCard({ kind, connections, disabled, onConnect, onActive, onDisco
         </Reveal>
       </div>
     </Swatch>
+  );
+}
+
+/** The public number/username and the buyer link it makes. Editable in place. */
+function BuyerLink({ kind, conn, disabled, onSave }: { kind: Meta; conn: Connection; disabled: boolean; onSave: (v: string) => Promise<string | null> }) {
+  const spec = SPEC[kind];
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(conn.publicHandle ?? "");
+  const id = `${conn.id}-handle`;
+
+  if (!editing) {
+    return (
+      <div className="space-y-2 border-t border-line pt-3">
+        {conn.link ? (
+          <>
+            <CopyLine label="Buyer link" value={conn.link} />
+            <p className="text-xs text-muted">
+              Share this link or put it in your bio: buyers who tap it start chatting with your Oja agent on {spec.product}.
+              {!conn.active && " It shows on your shop page while this channel is on."}
+            </p>
+          </>
+        ) : (
+          <p className="text-xs text-muted">
+            Add your {spec.handleLabel.toLowerCase()} to get a link buyers can tap to chat with your Oja agent on {spec.product}. It also shows on your shop page.
+          </p>
+        )}
+        <Button size="sm" variant="ghost" className={TAP} disabled={disabled} onClick={() => { setValue(conn.publicHandle ?? ""); setEditing(true); }}>
+          {conn.publicHandle ? `Edit ${spec.handleLabel.toLowerCase()}` : `Add ${spec.handleLabel.toLowerCase()}`}
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <form
+      className="fade space-y-2 border-t border-line pt-3"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        const err = await onSave(value.trim());
+        if (!err) setEditing(false);
+      }}
+    >
+      <Field id={id} label={spec.handleLabel} hint={`${spec.handleHint} Leave empty to remove the link.`} placeholder={spec.handlePlaceholder} value={value} onChange={(e) => setValue(e.target.value)} maxLength={80} autoComplete="off" spellCheck={false} className="font-mono" disabled={disabled} autoFocus />
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" className={TAP} disabled={disabled}>Save</Button>
+        <Button size="sm" type="button" variant="ghost" className={TAP} onClick={() => setEditing(false)}>Cancel</Button>
+      </div>
+    </form>
   );
 }

@@ -44,6 +44,8 @@ export const channelConnections = pgTable("channel_connections", {
   channel: text("channel").$type<Exclude<Channel, "web">>().notNull(),
   externalId: text("external_id").notNull(),
   displayName: text("display_name"),
+  // Public number (WhatsApp, digits) or username (Messenger Page, Instagram) buyers can reach. Shown on the shop.
+  publicHandle: text("public_handle"),
   accessTokenEnc: text("access_token_enc").notNull(),
   active: boolean("active").notNull().default(true),
   createdAt: createdAt(),
