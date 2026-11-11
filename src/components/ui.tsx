@@ -6,13 +6,37 @@ import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAt
 
 const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
 
-/** Ọjà wordmark. `size` scales the serif; the mono kicker can be hidden. */
-export function Wordmark({ size = "md", kicker = true }: { size?: "sm" | "md" | "lg"; kicker?: boolean }) {
-  const s = size === "lg" ? "text-6xl sm:text-8xl" : size === "sm" ? "text-2xl" : "text-3xl";
+/**
+ * The Oja mark: the Yorùbá letter Ọ with its àmì. The ring is a speech bubble
+ * (the chat); the dot beneath it is the coin that drops out of it (the sale).
+ * Drawn in currentColor, so it takes whatever ink it sits in.
+ */
+export function Logomark({ className = "size-7", title }: { className?: string; title?: string }) {
   return (
-    <span className="inline-flex items-baseline gap-2 text-strong">
-      <span className={cx("font-display leading-none tracking-tight", s)}>Ọjà</span>
-      {kicker && <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">market agent</span>}
+    <svg viewBox="0 0 40 40" className={className} role={title ? "img" : undefined} aria-hidden={title ? undefined : true} aria-label={title}>
+      <path
+        d="M15.35 26.97 A11 11 0 1 0 10.99 23.31 L9 30 Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3.4"
+        strokeLinejoin="round"
+      />
+      <circle cx="20" cy="35.4" r="2.7" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Ọjà wordmark: the mark, the name with its àmì, and an optional kicker. */
+export function Wordmark({ size = "md", kicker = true, mark = true }: { size?: "sm" | "md" | "lg"; kicker?: boolean; mark?: boolean }) {
+  const s = size === "lg" ? "text-6xl sm:text-8xl" : size === "sm" ? "text-2xl" : "text-3xl";
+  const m = size === "lg" ? "size-14 sm:size-20" : size === "sm" ? "size-6" : "size-8";
+  return (
+    <span className="inline-flex items-center gap-2 text-strong">
+      {mark && <Logomark className={cx(m, "shrink-0")} />}
+      <span className="inline-flex items-baseline gap-2">
+        <span lang="yo" className={cx("font-display leading-none tracking-tight", s)}>Ọjà</span>
+        {kicker && <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">market agent</span>}
+      </span>
     </span>
   );
 }

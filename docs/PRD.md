@@ -143,6 +143,7 @@ Rules: the model writes all money amounts exactly as tools return them (digits +
 - **Type:** Gloock (display serif, like hand-cut market signage), Schibsted Grotesk (UI and chat), Martian Mono (prices, order refs, labels).
 - **Motifs:** adire resist-dye patterns in pure CSS (eleko dots, alabere stitch lines, olokun ripples, aso-oke grid), notched fabric-tag cards, torn-receipt order cards, rubber stamps for status (PAID, SHIPPED), hard offset shadows on primary buttons.
 - **No third-party logos:** Oja draws its own channel glyphs (hackathon trademark rule).
+- **Name and mark:** the brand is always written **Ọjà**, with its Yorùbá àmì (dot under Ọ, grave on à). The logomark is the letter Ọ itself: the ring is a speech bubble (the chat) and the àmì is a coin dropping out of it (the sale). One ink, no gradient. `Logomark` in `src/components/ui.tsx`; favicon `src/app/icon.svg`.
 - Code: `src/app/globals.css` (tokens, patterns), `src/components/ui.tsx` (kit).
 
 ## 13. Scaling plan (after the hackathon)
