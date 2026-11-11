@@ -56,14 +56,14 @@ Deadline: **Thu Nov 12, 12:00 PM PT (9:00 PM Lagos)**. Internal: full Devpost dr
 | M2 | Agent answers only from the catalog (search, details, reviews) | ✅ built, needs live test |
 | M3 | Haggling within a code-enforced floor; bulk tiers (aso-ebi); loyalty discount | ✅ built + tested |
 | M4 | Delivery quote upfront (cost, carrier, ETA incl. making time) | ✅ built + tested |
-| M5 | Checkout: PayPal order via Agent Toolkit → approve → capture → **amount check** → paid | ✅ built, tested with stubs; **needs sandbox test** |
-| M6 | Ship: tracking number → `create_shipment_tracking` on PayPal | ✅ built, stubbed; needs sandbox test |
+| M5 | Checkout: PayPal order via Agent Toolkit → approve → **amount check before and after capture** → paid | ✅ live sandbox E2E on Render (OJA-T6YM9S, $83.00) |
+| M6 | Ship: tracking number → `create_shipment_tracking` on PayPal | ✅ live sandbox (DHL, JD014600006281234567) |
 | M7 | Seller inbox: drafts (send/edit/redraft/discard), takeover, orders, audit trail | ✅ built, needs browser test |
 | M8 | Naira rail: bank transfer, seller-confirmed only | ✅ built + tested |
 | M9 | Money guard on every reply | ✅ built + tested |
 | M10 | Seeded judge-mode demo shop (autopilot) + sandbox buyer login in README | 🟡 seed done; **sandbox buyer login missing** |
-| M11 | Hosted demo that stays up to Dec 15 (Render + Neon) | ⬜ |
-| M12 | Rate limits + spend cap on the model | 🟡 rate limits done; spend cap ⬜ |
+| M11 | Hosted demo that stays up to Dec 15 (Render + Neon) | ✅ https://oja-4586.onrender.com (free plan sleeps; Starter recommended) |
+| M12 | Rate limits + spend cap on the model | ✅ rate limits + daily turn cap (400) |
 | M13 | Submission: public repo, MIT LICENSE, README, video < 3 min, Devpost text | 🟡 LICENSE done |
 | M14 | **Seller desk** shell: Inbox · Catalog · Channels · Settings | 🟡 building 2026-11-11 |
 | M15 | **Channel launch**: connect WhatsApp / Messenger / Instagram (IDs + token, encrypted at rest), one signed Meta webhook, replies sent back on the same channel | 🟡 building 2026-11-11 |
