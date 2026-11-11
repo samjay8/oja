@@ -4,7 +4,7 @@ import { getDb } from "@/db";
 import { eq } from "drizzle-orm";
 import { conversations } from "@/db/schema";
 import { confirmPayPalPayment, logEvent, orderByRef, UserFacingError, vendorById } from "@/lib/commerce";
-import { captureOrder } from "@/lib/paypal";
+import { captureOrder, orderAmount } from "@/lib/paypal";
 
 // PayPal sends the buyer back here after they approve. Capture, verify, back to chat.
 export async function GET(req: NextRequest) {
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
   let status = "paid";
   try {
-    await confirmPayPalPayment(db, captureOrder, ref);
+    await confirmPayPalPayment(db, captureOrder, ref, orderAmount);
   } catch (e) {
     // Message only: PayPal error details carry the buyer's address.
     console.error("[pay/return]", ref, e instanceof Error ? e.message : e);

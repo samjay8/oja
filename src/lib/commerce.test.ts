@@ -85,6 +85,18 @@ describe("checkout charges what code agreed, not what anyone typed", () => {
     expect(ev).toHaveLength(1);
   });
 
+  it("refuses to capture when PayPal's order amount differs, before any money moves", async () => {
+    const conv = await getOrCreateConversation(db, vendor.id, "web", "buyer-pre");
+    const gele = await productNamed("Aso-oke gele and ipele set");
+    const order = await placeOrder(db, {
+      createCheckout: async () => ({ paypalOrderId: "8O190127TN364715T", approveUrl: "https://www.sandbox.paypal.com/checkoutnow?token=8O" }),
+      baseUrl: "http://x",
+    }, { vendor, conv, items: [{ productId: gele.id, qty: 1 }], shipTo });
+    const capture = vi.fn();
+    await expect(confirmPayPalPayment(db, capture, order.ref, async () => ({ amountMinor: 1, currency: "USD" }))).rejects.toThrow(/Nothing was charged/);
+    expect(capture).not.toHaveBeenCalled();
+  });
+
   it("uses bulk tiers for aso-ebi group orders", async () => {
     const conv = await getOrCreateConversation(db, vendor.id, "web", "buyer-3");
     const fabric = await productNamed("Aso-ebi adire fabric (per 5-yard piece)");

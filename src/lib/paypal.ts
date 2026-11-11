@@ -109,6 +109,14 @@ export async function getOrder(paypalOrderId: string): Promise<PayPalOrder> {
   return call<PayPalOrder>("get_order", { id: paypalOrderId });
 }
 
+/** The amount PayPal will charge for an order, in minor units. */
+export async function orderAmount(paypalOrderId: string): Promise<{ amountMinor: number; currency: string }> {
+  const o = await getOrder(paypalOrderId) as PayPalOrder & { purchase_units?: { amount?: { value: string; currency_code: string } }[] };
+  const a = o.purchase_units?.[0]?.amount;
+  if (!a) throw new PayPalError("get_order", "order has no amount", o);
+  return { amountMinor: Math.round(Number(a.value) * 100), currency: a.currency_code };
+}
+
 export type CaptureResult = {
   captureId: string;
   amountMinor: number;

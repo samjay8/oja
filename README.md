@@ -12,10 +12,12 @@ It starts as a web chat on the seller's Oja shop page. From the seller desk, the
 
 ## Try it
 
+**Live demo: https://oja-4586.onrender.com** (first load after idle can take up to a minute on the free plan)
+
 | | |
 |---|---|
-| Buyer chat (demo shop, autopilot) | `/shop/ife-textiles` |
-| Seller desk | `/vendor/ife-textiles`, dashboard key `oja-demo-2026` |
+| Buyer chat (demo shop, autopilot) | https://oja-4586.onrender.com/shop/ife-textiles |
+| Seller desk | https://oja-4586.onrender.com/vendor/ife-textiles · dashboard key `oja-demo-2026` |
 | Naira shop (bank-transfer rail, copilot) | `/shop/tolu-cakes` and `/vendor/tolu-cakes` (same key) |
 | PayPal sandbox **buyer** (log in at checkout) | `sb-wid9v53749299@personal.example.com` · password `p_BIi1+H` |
 

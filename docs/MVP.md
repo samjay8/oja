@@ -18,8 +18,8 @@ Legend: ⬜ todo · 🟡 in progress / partly done · ✅ done · ⛔ blocked (s
 - ⬜ Integrate + build + browser check + commit
 
 ### Thu Nov 12: ship
-- ⬜ Deploy: Neon + Render, `APP_URL`, env vars
-- ⬜ README final with sandbox buyer login; repo **public**; licence detected
+- ✅ Deploy: Neon (production branch) + Render free plan → https://oja-4586.onrender.com (auto-deploys from `main`)
+- 🟡 README final with sandbox buyer login (done); repo **public** ✅; MIT licence detected ✅
 - ⬜ Video < 3:00 (web chat first; no Meta logos; English subtitles for other languages)
 - ⬜ Devpost text + submit **before 9:00 PM Lagos**
 
@@ -119,3 +119,4 @@ Legend: ⬜ todo · 🟡 in progress / partly done · ✅ done · ⛔ blocked (s
 - 2026-11-05: Provider switch (`OJA_PROVIDER=anthropic|gemini`, `src/lib/llm.ts`). First live agent run on Gemini 3.5 Flash: quoted delivery upfront, held the floor ($76 → $73 vs $68 floor), refused a "$20 from the owner" injection. Replies 7–72 s (overload + retries). Free-tier quota ran out after ~15 turns.
 - 2026-11-11: Reframe: web first, launch agent on WhatsApp/Messenger/Instagram, 8 languages (EN, Naijá, Yorùbá, Hausa, Igbo, FR, DE, ZH). Aró design system. Work split across 3 parallel agents (buyer UI, seller desk, channels+languages backend). Sandbox accounts created by user (business + personal); app credentials still needed.
 - 2026-11-11: Gemini removed (code, dependency, keys). Claude Opus 5.5 is the only model; it also runs all 8 languages and seller translations.
+- 2026-11-11: Audit (docs/AUDIT.md): p50 3.7–4.7 s, all 7 languages OK, floor held under injections; guard fixes, delivery by city/state, prompt caching, desk mobile fixes. **Blocker:** sandbox business account `sb-443lak53744642` is PAYEE_ACCOUNT_LOCKED_OR_CLOSED (both apps pay it); needs a new US business sandbox account + app. Added pre-capture amount check. Deployed to Render; repo public.

@@ -192,15 +192,25 @@ export async function orderByRef(db: DB, ref: string) {
 }
 
 export type CaptureFn = typeof import("./paypal").captureOrder;
+export type OrderAmountFn = typeof import("./paypal").orderAmount;
 
 /**
  * Buyer came back from PayPal: capture, then check the captured amount matches the
  * order total before marking it paid. Idempotent.
  */
-export async function confirmPayPalPayment(db: DB, capture: CaptureFn, ref: string): Promise<Order> {
+export async function confirmPayPalPayment(db: DB, capture: CaptureFn, ref: string, amountOf?: OrderAmountFn): Promise<Order> {
   const order = await orderByRef(db, ref);
   if (!order || !order.paypalOrderId) throw new UserFacingError("Order not found.");
   if (order.status !== "awaiting_payment") return order;
+  // Check what PayPal will charge before taking the money, not only after.
+  if (amountOf) {
+    const pre = await amountOf(order.paypalOrderId);
+    if (pre.amountMinor !== order.totalMinor || pre.currency !== order.currency) {
+      await logEvent(db, { vendorId: order.vendorId, orderId: order.id, type: "payment.amount_mismatch",
+        data: { expected: order.totalMinor, got: pre.amountMinor, currency: pre.currency, stage: "before_capture" } });
+      throw new UserFacingError("The payment amount didn't match the order. Nothing was charged; the seller has been alerted.");
+    }
+  }
   const result = await capture(order.paypalOrderId);
   if (result.amountMinor !== order.totalMinor || result.currency !== order.currency) {
     await logEvent(db, { vendorId: order.vendorId, orderId: order.id, type: "payment.amount_mismatch",
