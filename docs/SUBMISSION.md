@@ -58,7 +58,7 @@ Oja is an AI sales agent for small sellers. Each seller gets a shop page with a 
 - **App:** Next.js 16, React 19 and TypeScript. Postgres on Neon with Drizzle ORM. Hosted on Render.
 - **Channels:** WhatsApp Cloud API, Messenger Platform and the Instagram API behind one HMAC-verified webhook.
 - **Design:** our own design system, *Aró*, named after the indigo dye of adire cloth: one indigo hue at eleven depths, adire resist-dye patterns drawn in CSS, and rubber-stamp statuses. The logo is the Yorùbá letter Ọ: its ring is a speech bubble and its dot (àmì) is a coin dropping out of the chat.
-- **Quality:** 47 automated tests cover pricing, the money guard, channels, encryption and the full checkout flow on an in-memory Postgres. A scripted audit measured replies at a median of 3.7–4.7 s with real Claude calls.
+- **Quality:** 57 automated tests cover pricing, the money guard, channels and buyer links, encryption, rate limits and the full checkout flow on an in-memory Postgres. A load test (docs/LOAD.md) measured the limits of the free hosting plan and led to adaptive polling and leaner queries. A scripted audit measured replies at a median of 3.7–4.7 s with real Claude calls.
 
 ### Challenges we ran into
 
