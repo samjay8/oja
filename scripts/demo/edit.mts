@@ -25,13 +25,42 @@ if (!existsSync(master)) ff(["-i", join(RAW, "take.webm"), "-vf", `fps=${FPS},fo
 const total = duration(master);
 console.log(`[edit] master ${total.toFixed(1)}s`);
 
-// 2. One clip per scene, with its waits compressed.
+// 2. Static stretches (page loads, slow replies with nothing moving) longer than HOLD
+// seconds also play fast, on top of the waits the recorder marked.
+const HOLD = Number(process.env.DEMO_HOLD ?? 2.0);
+const FREEZE_SPEED = 8;
+const fdOut = execFileSync("ffmpeg", ["-hide_banner", "-i", master, "-vf", `freezedetect=n=0.004:d=${HOLD + 0.4}`, "-an", "-f", "null", "-"], { stdio: ["ignore", "pipe", "pipe"] }).toString();
+const freezes: [number, number][] = [];
+let fs: number | null = null;
+for (const line of fdOut.split(/\r?\n/)) {
+  const m = line.match(/freeze_(start|end): ([\d.]+)/);
+  if (!m) continue;
+  if (m[1] === "start") fs = Number(m[2]);
+  else if (fs !== null) { freezes.push([fs, Number(m[2])]); fs = null; }
+}
+if (fs !== null) freezes.push([fs, total]);
+console.log(`[edit] ${freezes.length} static stretches over ${HOLD + 0.4}s`);
+
+// 3. One clip per scene, with its waits compressed.
 const clips: string[] = [];
 marks.scenes.forEach((s, i) => {
   const end = Math.min(s.end, total);
   const segs: { a: number; b: number; speed: number }[] = [];
+  const cuts: [number, number, number][] = [...s.cuts];
+  for (const [a, b] of freezes) {
+    const ca = Math.max(a, s.start) + HOLD, cb = Math.min(b, end) - 0.15;
+    if (cb - ca > 0.5) cuts.push([ca, cb, FREEZE_SPEED]);
+  }
+  // Merge overlaps; the faster speed wins where two cuts meet.
+  cuts.sort((x, y) => x[0] - y[0]);
+  const merged: [number, number, number][] = [];
+  for (const c of cuts) {
+    const last = merged[merged.length - 1];
+    if (last && c[0] <= last[1]) { last[1] = Math.max(last[1], c[1]); last[2] = Math.max(last[2], c[2]); }
+    else merged.push([...c]);
+  }
   let cursor = s.start;
-  for (const [a, b, speed] of s.cuts.sort((x, y) => x[0] - y[0])) {
+  for (const [a, b, speed] of merged) {
     const ca = Math.max(cursor, a), cb = Math.min(end, b);
     if (cb <= ca) continue;
     if (ca > cursor) segs.push({ a: cursor, b: ca, speed: 1 });
@@ -48,7 +77,7 @@ marks.scenes.forEach((s, i) => {
   console.log(`[edit] ${s.name.padEnd(12)} ${(end - s.start).toFixed(1).padStart(5)}s → ${edited.toFixed(1).padStart(5)}s`);
 });
 
-// 3. Crossfade the scenes into one piece.
+// 4. Crossfade the scenes into one piece.
 const lens = clips.map(duration);
 const inputs = clips.flatMap((c) => ["-i", c]);
 let graph = "";
@@ -65,7 +94,7 @@ ff([...inputs, "-filter_complex", graph, "-map", "[v]", "-c:v", "libx264", "-pre
 const finalLen = duration(FINAL);
 console.log(`[edit] final ${Math.floor(finalLen / 60)}:${String(Math.round(finalLen % 60)).padStart(2, "0")} → ${FINAL}`);
 
-// 4. Contact sheet: one frame every 4 s.
+// 5. Contact sheet: one frame every 4 s.
 const sheet = FINAL.replace(/\.mp4$/, "-sheet.png");
 const cols = 5, rows = Math.ceil(finalLen / 4 / cols);
 ff(["-i", FINAL, "-vf", `fps=1/4,scale=400:-1,tile=${cols}x${rows}:padding=4:color=white`, "-frames:v", "1", sheet]);

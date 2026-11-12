@@ -114,12 +114,17 @@ export async function makeOffer(db: DB, input: {
   return { product, decision };
 }
 
-/** The unit price checkout will charge: an accepted offer if one is live, else the list/tier price. */
+/**
+ * The unit price checkout will charge. Every live offer Oja made in this chat is a real
+ * quote (accepted or still standing), so the lowest of them applies; otherwise the
+ * list/tier price. A buyer who says "I'll take it at your price" and goes straight to
+ * the address must not be charged list price.
+ */
 export async function agreedUnitPrice(db: DB, vendor: Vendor, conv: Conversation, product: Product, qty: number) {
   const history = await liveOffers(db, conv.id, product.id, qty);
-  const accepted = history.findLast((o) => o.decision === "accept");
-  if (accepted) return accepted.unitPriceMinor;
-  return unitPriceFor(product, qty, { returning: await isReturningBuyer(db, conv), playbook: playbookFor(vendor) });
+  const base = unitPriceFor(product, qty, { returning: await isReturningBuyer(db, conv), playbook: playbookFor(vendor) });
+  if (!history.length) return base;
+  return Math.min(base, ...history.map((o) => o.unitPriceMinor));
 }
 
 export function railFor(currency: Currency) {

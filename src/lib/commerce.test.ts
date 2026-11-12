@@ -7,7 +7,7 @@ import { openMemoryDb, type DB } from "@/db";
 import { seed, DEMO_SLUG, DEMO_NGN_SLUG } from "@/db/seed";
 import { events, products } from "@/db/schema";
 import {
-  confirmPayPalPayment, getOrCreateConversation, makeOffer, markShipped, placeOrder,
+  agreedUnitPrice, confirmPayPalPayment, getOrCreateConversation, makeOffer, markShipped, placeOrder,
   vendorBySlug, vendorConfirmTransfer, type Vendor,
 } from "./commerce";
 
@@ -120,5 +120,22 @@ describe("checkout charges what code agreed, not what anyone typed", () => {
     const paid = await vendorConfirmTransfer(db, tolu.id, order.id);
     expect(paid.status).toBe("paid");
     await expect(vendorConfirmTransfer(db, vendor.id, order.id)).rejects.toThrow(); // other vendor can't
+  });
+});
+
+describe("a standing counter-offer is the price, even if the buyer never says 'accept' to the tool", () => {
+  it("charges the lowest live offer, and list price when there is none", async () => {
+    const conv = await getOrCreateConversation(db, vendor.id, "web", "buyer-counter-only");
+    const adire = await productNamed("Adire two-piece (indigo)");
+    expect(await agreedUnitPrice(db, vendor, conv, adire, 7)).toBe(adire.listPriceMinor);
+
+    const first = await makeOffer(db, { vendor, conv, productId: adire.id, qty: 7, buyerOfferMinor: 5000 });
+    const second = await makeOffer(db, { vendor, conv, productId: adire.id, qty: 7, buyerOfferMinor: 2000 });
+    expect(first.decision.decision).toBe("counter");
+    const lowest = Math.min(first.decision.unitPriceMinor, second.decision.unitPriceMinor);
+    expect(lowest).toBeGreaterThanOrEqual(adire.minPriceMinor);
+    expect(await agreedUnitPrice(db, vendor, conv, adire, 7)).toBe(lowest);
+    // A different quantity is a different negotiation.
+    expect(await agreedUnitPrice(db, vendor, conv, adire, 1)).toBe(adire.listPriceMinor);
   });
 });
