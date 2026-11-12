@@ -27,6 +27,12 @@ function parseHandle(channel: MetaChannel, raw: string | undefined): { ok: true;
   };
 }
 
+/**
+ * Meta setup (webhook URL, token status, the connect form) is operator plumbing. It stays
+ * hidden from sellers until the platform's Meta app is approved and OJA_CHANNEL_SETUP=1.
+ */
+const setupEnabled = () => process.env.OJA_CHANNEL_SETUP === "1";
+
 function tokenHint(enc: string) {
   try { return mask(decrypt(enc)); } catch { return "unreadable"; }
 }
@@ -37,10 +43,14 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/vendor/[slu
   if (!vendor) return json({ error: "signed out" }, 401);
   const db = await getDb();
   const rows = await db.select().from(channelConnections).where(eq(channelConnections.vendorId, vendor.id)).orderBy(asc(channelConnections.createdAt));
+  const setup = setupEnabled();
   return json({
-    webhookUrl: `${await baseUrl()}/api/channels/meta`,
-    verifyTokenConfigured: Boolean(process.env.META_WEBHOOK_VERIFY_TOKEN || process.env.WHATSAPP_VERIFY_TOKEN),
-    appSecretConfigured: Boolean(process.env.META_APP_SECRET),
+    setupEnabled: setup,
+    ...(setup && {
+      webhookUrl: `${await baseUrl()}/api/channels/meta`,
+      verifyTokenConfigured: Boolean(process.env.META_WEBHOOK_VERIFY_TOKEN || process.env.WHATSAPP_VERIFY_TOKEN),
+      appSecretConfigured: Boolean(process.env.META_APP_SECRET),
+    }),
     channels: rows.map((r) => ({
       id: r.id, channel: r.channel, externalId: r.externalId, displayName: r.displayName,
       publicHandle: r.publicHandle, link: channelLink(r.channel, r.publicHandle),
@@ -61,6 +71,7 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/vendor/[slu
   const { slug } = await ctx.params;
   const vendor = await currentVendor(slug);
   if (!vendor) return json({ error: "signed out" }, 401);
+  if (!setupEnabled()) return json({ error: "WhatsApp, Messenger and Instagram are coming soon." }, 403);
   if (!allow(`channels:${vendor.id}`, 20, 10 * 60_000)) return json({ error: "Too many changes. Try again in a few minutes." }, 429);
   const parsed = Connect.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return json({ error: parsed.error.issues[0]?.message ?? "bad request" }, 400);

@@ -11,7 +11,8 @@ type Connection = {
   publicHandle: string | null; link: string | null; active: boolean; tokenHint: string; createdAt: string;
 };
 type TestResult = { ok: boolean; text: string };
-type ChannelsData = { webhookUrl: string; verifyTokenConfigured: boolean; appSecretConfigured: boolean; channels: Connection[] };
+/** Setup fields only come back when the operator has turned channel setup on (OJA_CHANNEL_SETUP=1). */
+type ChannelsData = { setupEnabled: boolean; webhookUrl?: string; verifyTokenConfigured?: boolean; appSecretConfigured?: boolean; channels: Connection[] };
 
 const SPEC: Record<Meta, { product: string; idLabel: string; idHint: string; tokenLabel: string; tokenHint: string; handleLabel: string; handleHint: string; handlePlaceholder: string; steps: string[] }> = {
   whatsapp: {
@@ -74,6 +75,7 @@ export function ChannelsDesk({ slug }: { slug: string }) {
   if (status === null) return <Loading label="Opening your channels…" />;
   const unavailable = !data;
   const shopUrl = origin ? `${origin}/shop/${slug}` : "";
+  const setup = Boolean(data?.setupEnabled);
 
   /** Confirms success with a toast; returns the error text for the card to show, if any. */
   async function run(fn: () => Promise<unknown>, ok: string): Promise<string | null> {
@@ -91,12 +93,12 @@ export function ChannelsDesk({ slug }: { slug: string }) {
     <main className="fade mx-auto w-full max-w-5xl flex-1 space-y-6 px-4 py-6 sm:px-6">
       <DeskHeading kicker="Channels" title="Launch Oja where buyers chat" />
       <p className="max-w-2xl text-sm text-muted">
-        One agent, one inbox. Every channel you connect lands in your Inbox with the same catalog, price floors, copilot drafts and PayPal checkout.
+        One agent, one inbox. Today buyers reach Oja through your shop link. WhatsApp, Messenger and Instagram are next: the same agent, catalog, price floors and PayPal checkout, in the apps your buyers already use.
       </p>
 
       {unavailable && <Notice tone="error">Channel setup isn&apos;t reachable right now ({status || "network error"}). Web chat still works.</Notice>}
 
-      {data && (
+      {setup && data?.webhookUrl && (
         <Swatch as="section" pattern="grid">
           <div className="space-y-3 p-4 sm:p-5">
             <Kicker>Meta webhook (shared by all three channels)</Kicker>
@@ -119,12 +121,16 @@ export function ChannelsDesk({ slug }: { slug: string }) {
             <CopyLine label="Shop link" value={shopUrl} />
           </div>
         </Swatch>
-        {(["whatsapp", "messenger", "instagram"] as const).map((k) => (
+        {(["whatsapp", "messenger", "instagram"] as const).map((k) => {
+          const conns = data?.channels.filter((c) => c.channel === k) ?? [];
+          if (!setup && conns.length === 0) return <ComingSoon key={k} kind={k} />;
+          return (
           <ChannelCard
             key={k}
             kind={k}
+            setup={setup}
             disabled={unavailable}
-            connections={data?.channels.filter((c) => c.channel === k) ?? []}
+            connections={conns}
             onConnect={(body) => run(() => sendJson(api, "POST", { channel: k, ...body }), `${CHANNEL_LABEL[k]} connected. Send a test message from another account.`)}
             onHandle={(id, publicHandle) => run(() => sendJson(api, "PATCH", { id, publicHandle }), publicHandle ? "Buyer link saved." : "Buyer link removed.")}
             onActive={(id, active) => run(() => sendJson(api, "PATCH", { id, active }), active ? `${CHANNEL_LABEL[k]} is live.` : `${CHANNEL_LABEL[k]} is paused. Messages won't be answered.`)}
@@ -138,13 +144,16 @@ export function ChannelsDesk({ slug }: { slug: string }) {
               }
             }}
           />
-        ))}
+          );
+        })}
       </ul>
       <Toast flash={flash} />
 
-      <Notice>
-        Messenger and Instagram run in Meta development mode until App Review; WhatsApp test numbers reach up to 5 verified recipients.
-      </Notice>
+      {setup && (
+        <Notice>
+          Messenger and Instagram run in Meta development mode until App Review; WhatsApp test numbers reach up to 5 verified recipients.
+        </Notice>
+      )}
       <p className="border border-dashed border-line-strong p-4 text-sm text-muted">
         <span className="font-semibold text-strong">More channels coming</span> (Telegram, TikTok…) based on demand.
       </p>
@@ -161,8 +170,27 @@ function ChannelTitle({ kind }: { kind: keyof typeof CHANNEL_LABEL }) {
   );
 }
 
-function ChannelCard({ kind, connections, disabled, onConnect, onHandle, onActive, onDisconnect, onTest }: {
-  kind: Meta; connections: Connection[]; disabled: boolean;
+const SOON: Record<Meta, string> = {
+  whatsapp: "Buyers message your business number and Oja answers, haggles and sends the PayPal link, right in WhatsApp.",
+  messenger: "Oja answers your Facebook Page's messages with the same catalog and checkout.",
+  instagram: "Oja replies to Instagram DMs, so a buyer who asks “how much?” under a post can pay in the chat.",
+};
+
+/** What a seller sees before channel setup opens: a promise, not plumbing. */
+function ComingSoon({ kind }: { kind: Meta }) {
+  return (
+    <Swatch as="li">
+      <div className="space-y-3 p-4 sm:p-5">
+        <ChannelTitle kind={kind} />
+        <div className="flex flex-wrap gap-2"><Tag dashed>Coming soon</Tag></div>
+        <p className="text-sm text-muted">{SOON[kind]}</p>
+      </div>
+    </Swatch>
+  );
+}
+
+function ChannelCard({ kind, setup, connections, disabled, onConnect, onHandle, onActive, onDisconnect, onTest }: {
+  kind: Meta; setup: boolean; connections: Connection[]; disabled: boolean;
   onConnect: (b: { externalId: string; displayName?: string; publicHandle?: string; accessToken: string }) => Promise<string | null>;
   onHandle: (id: string, publicHandle: string) => Promise<string | null>;
   onActive: (id: string, active: boolean) => Promise<string | null>;
@@ -180,7 +208,7 @@ function ChannelCard({ kind, connections, disabled, onConnect, onHandle, onActiv
   const [rowErr, setRowErr] = useState<Record<string, string | null>>({});
   const [tests, setTests] = useState<Record<string, TestResult>>({});
   const connected = connections.length > 0;
-  const showForm = !connected || open;
+  const showForm = setup && (!connected || open);
 
   const wrap = async (key: string, fn: () => Promise<unknown>) => {
     setBusy(key);
@@ -199,7 +227,7 @@ function ChannelCard({ kind, connections, disabled, onConnect, onHandle, onActiv
           {connected
             ? connections.some((c) => c.active) ? <Stamp filled tilt={false}>Live</Stamp> : <Stamp tilt={false}>Paused</Stamp>
             : <Tag dashed>Not connected</Tag>}
-          {kind !== "whatsapp" && <Tag dashed>Dev mode until App Review</Tag>}
+          {setup && kind !== "whatsapp" && <Tag dashed>Dev mode until App Review</Tag>}
         </div>
 
         {connections.map((c) => (
@@ -260,14 +288,14 @@ function ChannelCard({ kind, connections, disabled, onConnect, onHandle, onActiv
           </div>
         ))}
 
-        <details className="group border-t border-line pt-3" open={!connected}>
+        {setup && <details className="group border-t border-line pt-3" open={!connected}>
           <summary className="ease-ui cursor-pointer py-1 font-mono max-sm:py-3 text-[11px] uppercase tracking-wider text-muted hover:text-strong">Setup steps</summary>
           <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm text-text marker:font-mono marker:text-muted">
             {spec.steps.map((s) => <li key={s}>{s}</li>)}
           </ol>
-        </details>
+        </details>}
 
-        {connected && !open && (
+        {setup && connected && !open && (
           <Button size="sm" variant="outline" className={`fade ${TAP}`} onClick={() => { setOpen(true); setFormErr(null); }}>Connect another {spec.product === "Messenger" ? "Page" : "account"}</Button>
         )}
         <Reveal open={showForm}>
