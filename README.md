@@ -63,7 +63,22 @@ Buyer (web · WhatsApp · Messenger · Instagram)
 
 ### PayPal usage
 
-Through the official [`@paypal/agent-toolkit`](https://github.com/paypal/agent-toolkit), with least-privilege actions, sandbox only: `create_order`, `get_order`, `pay_order` (capture), `create_shipment_tracking`, `list_disputes`.
+Through the official [`@paypal/agent-toolkit`](https://github.com/paypal/agent-toolkit), with least-privilege actions, sandbox only. Oja's code calls the toolkit; the model never does.
+
+| Toolkit action | What Oja uses it for |
+|---|---|
+| `create_order` | Creates the PayPal order for the exact total Oja's code computed, and returns the buyer's checkout link |
+| `get_order` | Checks the order amount and currency with PayPal before capturing |
+| `pay_order` | Captures the payment when the buyer returns; the captured amount is checked again |
+| `create_shipment_tracking` | Adds the seller's carrier and tracking number to the PayPal transaction (Seller Protection) |
+
+### AI usage
+
+Claude Opus 5.5 (`claude-opus-5-5`) through the Anthropic SDK's tool runner, with prompt caching. It only gets Oja's own tools: `search_catalog`, `product_details`, `show_reviews`, `negotiate`, `quote_delivery`, `create_checkout`, `order_status`, `handoff_to_human`. It also translates messages for the seller. A money guard checks every reply for amounts or links the code didn't produce.
+
+### Hosting: Render
+
+The app runs on Render as a Node web service (`render.yaml`, Frankfurt), with Postgres on Neon. Migrations and the demo seed run at boot. Live: https://oja-4586.onrender.com
 
 ## Design: Aró
 
