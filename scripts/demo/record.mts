@@ -107,6 +107,13 @@ async function glide(l: Locator, ms?: number, dx = 0, dy = 0) {
 async function click(l: Locator, ms?: number) {
   await glide(l, ms);
   await beat(120);
+  // The layout can shift while the cursor travels (a banner appears, a list grows).
+  // Re-measure before pressing so the click lands on the element, not its neighbour.
+  const b = await l.first().boundingBox();
+  if (b) {
+    const [x, y] = [b.x + b.width / 2, b.y + b.height / 2];
+    if (Math.hypot(x - mouse.x, y - mouse.y) > 4) await glideTo(x, y, 180);
+  }
   await page.mouse.down();
   await beat(90);
   await page.mouse.up();
@@ -162,6 +169,7 @@ async function say(text: string) {
     await page.waitForFunction((n) => document.querySelectorAll('[role="log"] > div.justify-start').length > n, before, { timeout: 90_000 });
     await beat(600);
   }, { keep: 1.0, speed: 10 });
+  if (await page.getByRole("button", { name: /Try again/ }).isVisible().catch(() => false)) console.warn(`[warn] the client showed a send failure after: ${text.slice(0, 40)}`);
 }
 async function read(ms: number) {
   // Rest on the reply, cursor off the text.

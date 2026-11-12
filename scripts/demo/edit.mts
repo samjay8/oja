@@ -25,21 +25,32 @@ if (!existsSync(master)) ff(["-i", join(RAW, "take.webm"), "-vf", `fps=${FPS},fo
 const total = duration(master);
 console.log(`[edit] master ${total.toFixed(1)}s`);
 
-// 2. Static stretches (page loads, slow replies with nothing moving) longer than HOLD
-// seconds also play fast, on top of the waits the recorder marked.
+// 2. Idle stretches (page loads, slow replies with nothing moving) longer than HOLD seconds
+// also play fast, on top of the waits the recorder marked. Motion is measured on tiny
+// grayscale frames, so a blinking caret or a one-pixel change doesn't count as movement.
 const HOLD = Number(process.env.DEMO_HOLD ?? 2.0);
-const FREEZE_SPEED = 8;
-const fdOut = execFileSync("ffmpeg", ["-hide_banner", "-i", master, "-vf", `freezedetect=n=0.004:d=${HOLD + 0.4}`, "-an", "-f", "null", "-"], { stdio: ["ignore", "pipe", "pipe"] }).toString();
-const freezes: [number, number][] = [];
-let fs: number | null = null;
-for (const line of fdOut.split(/\r?\n/)) {
-  const m = line.match(/freeze_(start|end): ([\d.]+)/);
-  if (!m) continue;
-  if (m[1] === "start") fs = Number(m[2]);
-  else if (fs !== null) { freezes.push([fs, Number(m[2])]); fs = null; }
+const FREEZE_SPEED = Number(process.env.DEMO_IDLE_SPEED ?? 8);
+const PF = 4, W = 160, H = 100; // 4 fps on a 160×100 grey grid
+const raw = execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-i", master, "-vf", `fps=${PF},scale=${W}:${H}:flags=area,format=gray`, "-f", "rawvideo", "-"], { maxBuffer: 1 << 28 });
+const nFrames = Math.floor(raw.length / (W * H));
+const moving: boolean[] = [];
+for (let f = 1; f < nFrames; f++) {
+  let changed = 0;
+  for (let i = 0; i < W * H; i++) if (Math.abs(raw[f * W * H + i] - raw[(f - 1) * W * H + i]) > 10) changed++;
+  moving.push(changed > 8); // a typed letter moves a dozen cells; the caret and the typing dots move one or two
 }
-if (fs !== null) freezes.push([fs, total]);
-console.log(`[edit] ${freezes.length} static stretches over ${HOLD + 0.4}s`);
+const freezes: [number, number][] = [];
+let runStart: number | null = null;
+for (let f = 0; f <= moving.length; f++) {
+  const still = f < moving.length && !moving[f];
+  if (still && runStart === null) runStart = f;
+  if (!still && runStart !== null) {
+    const a = runStart / PF, b = (f + 1) / PF;
+    if (b - a >= HOLD + 0.4) freezes.push([a, b]);
+    runStart = null;
+  }
+}
+console.log(`[edit] ${freezes.length} idle stretches over ${HOLD + 0.4}s: ${freezes.map(([a, b]) => `${a.toFixed(0)}–${b.toFixed(0)}`).join(" ")}`);
 
 // 3. One clip per scene, with its waits compressed.
 const clips: string[] = [];
@@ -90,7 +101,9 @@ for (let i = 1; i < clips.length; i++) {
   prev = out;
 }
 graph = graph.replace(/;$/, "");
-ff([...inputs, "-filter_complex", graph, "-map", "[v]", "-c:v", "libx264", "-preset", "slow", "-crf", "19", "-pix_fmt", "yuv420p", "-movflags", "+faststart", FINAL]);
+const PACE = Number(process.env.DEMO_PACE ?? 1); // 1.08 = 8% faster everywhere, barely visible
+if (PACE !== 1) graph += `;[v]setpts=PTS/${PACE}[vp]`;
+ff([...inputs, "-filter_complex", graph, "-map", PACE !== 1 ? "[vp]" : "[v]", "-c:v", "libx264", "-preset", "slow", "-crf", "19", "-pix_fmt", "yuv420p", "-movflags", "+faststart", FINAL]);
 const finalLen = duration(FINAL);
 console.log(`[edit] final ${Math.floor(finalLen / 60)}:${String(Math.round(finalLen % 60)).padStart(2, "0")} → ${FINAL}`);
 
