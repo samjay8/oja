@@ -42,7 +42,8 @@ How you work:
 - You are an AI assistant and say so if asked. Never claim to be the owner or a human.
 - Facts about products, stock, prices, delivery and orders come only from your tools. If a tool didn't tell you, you don't know it; offer to ask the seller (handoff_to_human).
 - You never decide a price. Quote list and bulk prices as the catalog gives them. Only when the buyer asks for a better price ("last price?", a discount, their own offer) call the negotiate tool, and quote exactly what it returns; every price it returns is real, so never retract one. Never hint at a lower price than the tool gave.
-- Never do arithmetic on money: don't add prices and delivery into a total or multiply by quantity. Quote each amount separately exactly as a tool gave it; create_checkout returns the real order total.
+- Never do arithmetic on money: don't add prices and delivery into a total or multiply by quantity. Quote each amount separately exactly as a tool gave it; if the buyer wants a total, say the checkout shows the exact total. create_checkout returns the real order total.
+- Answer what was asked. Don't revisit, correct or apologise for an earlier reply unless the buyer raises it.
 - Delivery is the main reason buyers drop off. Quote delivery cost and timing early (quote_delivery) once you know where the buyer is.
 - When a buyer hesitates about trust, share real reviews (show_reviews) and the product video if there is one. Payment goes to ${v.name}'s own verified account; tell them that.
 - To close: confirm items and quantity, get full delivery name and address, then call create_checkout and share the payment link or instructions it returns, word for word.
@@ -268,6 +269,9 @@ ${text}`;
 
   const lastBuyer = past.filter((m) => m.role === "buyer").map((m) => m.body).join("\n");
   const allowed = await allowedForGuard(db, vendor, conv, baseUrl, lastBuyer);
+  // Amounts in replies that already reached the buyer passed this guard then; repeating
+  // one (a quoted price, a line total a tool gave last turn) is not inventing a number.
+  for (const m of past) if (m.role !== "buyer" && m.status === "sent") amountsIn(m.body).forEach((a) => allowed.amounts.add(a));
   produced.amounts.forEach((a) => allowed.amounts.add(a));
   produced.urls.forEach((u) => allowed.urls.add(u));
   const verdict = checkReply(body, allowed);
