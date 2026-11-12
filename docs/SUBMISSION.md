@@ -34,6 +34,7 @@ Across Nigeria, and among Nigerians abroad, buying and selling happens in chat. 
 - **4 of 6** lose sales when the buyer simply stops replying. "Before my rep could get back to them, they had messaged another vendor."
 - **4 of 6** buyers had been scammed, or nearly, paying in chat. "The seller wanted me to pay to an account that wasn't the company's account."
 - Two of the three who had tried Meta's AI agent stopped using it: "Customers complained about the automated responses."
+- **0 of 6** sellers receive money with PayPal, and none of the buyers had ever paid with it. Every domestic purchase was a bank transfer or a mobile wallet. Most people we spoke to knew the name and little else.
 
 Chat bots can answer questions. What sellers need is something that **closes the sale** and gets them paid safely, and what buyers need is a reason to trust the payment.
 
@@ -48,7 +49,7 @@ Oja is an AI sales agent for small sellers. Each seller gets a shop page with a 
 - **Protects the sale after payment.** Oja ships to the address on the PayPal transaction and adds the seller's tracking number to PayPal with shipment tracking, which is what PayPal Seller Protection looks for.
 - **Keeps the seller in control.** By default Oja drafts and the seller taps send (copilot). Autopilot is a switch. A money guard checks every reply: if it contains an amount or link that the code didn't produce, it's held for the seller.
 - **Speaks the buyer's language.** English, Nigerian Pidgin, Yorùbá, Hausa, Igbo, French, German and Chinese. The seller can translate any message into their own language. The Nigerian languages are marked beta until a native speaker reviews them.
-- **Goes where buyers are.** From the seller desk, a seller can connect the same agent to WhatsApp, Messenger and Instagram through one signed Meta webhook. The tokens are encrypted at rest.
+- **Built for where buyers are.** The seller desk has a Channels page to connect the same agent to WhatsApp, Messenger and Instagram through one signed Meta webhook, with tokens encrypted at rest. The integration is built and tested; going live waits on Meta's business approval.
 - **Two payment rails.** USD sales use PayPal. Naira sales inside Nigeria use the seller's own bank account, and only the seller can mark those paid; the AI never can.
 
 ### How we built it
@@ -75,6 +76,8 @@ Oja is an AI sales agent for small sellers. Each seller gets a shop page with a 
 ### What we learned
 
 Sellers don't feel *payment* pain, because they get paid upfront by transfer; buyers carry the risk. So the pitch to sellers is conversion ("turn hesitant buyers into paid orders"), and the pitch to buyers is protection ("pay the real business, with PayPal protection").
+
+We also learned that PayPal is nearly invisible in this market. Not one of our sellers receives with it and none of our buyers had paid with it, yet the problems they described, strangers' bank accounts, no recourse, cross-border buyers who can't pay, are the problems PayPal solves. Oja puts PayPal in front of both sides at the one moment it matters, the payment, and makes it the easy path: the seller never opens a PayPal dashboard, and the buyer meets PayPal as the safe way to pay someone they've only met in a chat. If Oja works, it brings PayPal into the light for a market that mostly hasn't seen it.
 
 ### What's next
 

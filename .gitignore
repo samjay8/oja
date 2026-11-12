@@ -46,3 +46,6 @@ next-env.d.ts
 *.csv
 !.env.example
 /.next-*/
+
+# demo recordings
+/demo/
