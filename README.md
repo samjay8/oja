@@ -14,6 +14,10 @@ It starts as a web chat on the seller's Oja shop page. From the seller desk, the
 
 **Live demo: https://oja-4586.onrender.com** (first load after idle can take up to a minute on the free plan)
 
+**Demo video: https://youtu.be/XMQhY7en1Ug**
+
+[![Oja demo video](https://img.youtube.com/vi/XMQhY7en1Ug/hqdefault.jpg)](https://youtu.be/XMQhY7en1Ug)
+
 | | |
 |---|---|
 | Buyer chat (demo shop, autopilot) | https://oja-4586.onrender.com/shop/ife-textiles |
